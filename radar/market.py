@@ -70,7 +70,7 @@ def _quick_activity(rows,now,clock_uncertainty_ms):
 
 def _is_active_participation(f):
     g5=abs(f.get('oi_growth') or 0.0);g15=abs(f.get('oi_growth_15m') or 0.0)
-    g_base=abs(f.get('oi_growth_base') or 0.0);v5_z=abs(f.get('volume_5m_z') or 0.0)
+    g_base=abs(f.get('oi_growth_base') or 0.0);v5_z=f.get('volume_5m_z') or 0.0
     return (g5>=0.0025 or g15>=0.0025 or g_base>=0.0075 or v5_z>=1.0)
 
 def _heat_score(f):
