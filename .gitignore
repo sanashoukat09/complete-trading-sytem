@@ -1,0 +1,12 @@
+﻿.venv/
+__pycache__/
+.pytest_cache/
+build/
+*.egg-info/
+*.db-wal
+*.db-shm
+
+# GitHub 100MB file limit guard:
+# radar.db contains 10.5M raw WebSocket tick events (~10.5 GB) which exceeds GitHub limits.
+# radar_portable.db contains the complete history (94,603 decisions, states, universe, manifest, events) at ~44MB.
+data-paper-v61/radar.db

@@ -1,0 +1,78 @@
+{
+  "source_archive_sha256": "5f5a1b1d016312fa877155d6f70b82531b1105c9d5dc2ad829c4704994cc54fb",
+  "snapshot_sha256": "4dd1dfd66109851fbff9a04ae79320e62e9c3363396a1d598b668d54f53f0e9d",
+  "integrity": "ok",
+  "events": 104700,
+  "stats": {
+    "META": {
+      "count": 459,
+      "median_lag_ms": 0,
+      "p95_lag_ms": 0,
+      "max_lag_ms": 0,
+      "over_3000ms": 0
+    },
+    "BAR": {
+      "count": 13857,
+      "median_lag_ms": 1461246,
+      "p95_lag_ms": 6753967,
+      "max_lag_ms": 7446323,
+      "over_3000ms": 13851
+    },
+    "OI": {
+      "count": 3094,
+      "median_lag_ms": 1887023.0,
+      "p95_lag_ms": 8268618,
+      "max_lag_ms": 9108887,
+      "over_3000ms": 3094
+    },
+    "UNIVERSE": {
+      "count": 5,
+      "median_lag_ms": 0,
+      "p95_lag_ms": 0,
+      "max_lag_ms": 0,
+      "over_3000ms": 0
+    },
+    "GAP": {
+      "count": 216,
+      "median_lag_ms": 0.0,
+      "p95_lag_ms": 0,
+      "max_lag_ms": 0,
+      "over_3000ms": 0
+    },
+    "TIMER": {
+      "count": 16179,
+      "median_lag_ms": 0,
+      "p95_lag_ms": 0,
+      "max_lag_ms": 0,
+      "over_3000ms": 0
+    },
+    "TRADE": {
+      "count": 35121,
+      "median_lag_ms": 203253,
+      "p95_lag_ms": 3200384,
+      "max_lag_ms": 5475955,
+      "over_3000ms": 26291
+    },
+    "DEPTH": {
+      "count": 4149,
+      "median_lag_ms": 135378,
+      "p95_lag_ms": 1577151,
+      "max_lag_ms": 2986594,
+      "over_3000ms": 3266
+    },
+    "QUOTE": {
+      "count": 31620,
+      "median_lag_ms": 153320.0,
+      "p95_lag_ms": 1453229,
+      "max_lag_ms": 3078867,
+      "over_3000ms": 25531
+    }
+  },
+  "episodes": 38,
+  "episodes_without_trades": 34,
+  "candidates": 0,
+  "positions": 0,
+  "outcomes": 0,
+  "episodes_with_later_bar_boundary_cross": 26,
+  "caveat": "Later bar crosses are not executable signals or proof of a missed profitable trade. Tick coverage is incomplete."
+}

@@ -1,0 +1,29 @@
+{
+  "rows": 104700,
+  "repeats": 30,
+  "before": {
+    "median_ms": 17.202773000008165,
+    "max_ms": 25.900390999595402,
+    "plan": [
+      [
+        4,
+        0,
+        216,
+        "SCAN events"
+      ]
+    ]
+  },
+  "after": {
+    "median_ms": 0.002373500137764495,
+    "max_ms": 0.23391099966829643,
+    "plan": [
+      [
+        5,
+        0,
+        61,
+        "SEARCH events USING INDEX pending_events (applied=?)"
+      ]
+    ]
+  },
+  "scope": "Local pending-event lookup only, not full runtime throughput or laptop performance"
+}

@@ -1,0 +1,843 @@
+{
+  "episodes": [
+    {
+      "symbol": "LSKUSDT",
+      "lower": 0.36804,
+      "upper": 0.37369,
+      "width": 0.005650000000000044,
+      "created": 1789905999182,
+      "expires": 1789911399182,
+      "id": "EP_a99f09b70f84ecec8f247c4f",
+      "version": 1,
+      "rotations": 5,
+      "events": {
+        "BAR": 7,
+        "OI": 30,
+        "META": 1
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "COTIUSDT",
+      "lower": 0.017649,
+      "upper": 0.017819,
+      "width": 0.00017,
+      "created": 1789905999540,
+      "expires": 1789911399540,
+      "id": "EP_249a37ecbdb9f3ef55bd25a3",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 13,
+        "OI": 30,
+        "META": 1
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "ARUSDT",
+      "lower": 4.274,
+      "upper": 4.347,
+      "width": 0.0730000000000004,
+      "created": 1789906005376,
+      "expires": 1789911405376,
+      "id": "EP_cf2207d9216889b13b265c82",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 78,
+        "OI": 35,
+        "META": 2
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "\u725b\u6765USDT",
+      "lower": 0.10095,
+      "upper": 0.1029,
+      "width": 0.0019500000000000073,
+      "created": 1789906006985,
+      "expires": 1789911406985,
+      "id": "EP_8510cf1216fd24dc8b0a903b",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 31,
+        "OI": 33,
+        "META": 2
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "CHIPUSDT",
+      "lower": 0.04087,
+      "upper": 0.04118,
+      "width": 0.0003100000000000047,
+      "created": 1789906007483,
+      "expires": 1789911407483,
+      "id": "EP_b48939af00905adf99a42f22",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 21,
+        "OI": 34,
+        "GAP": 8,
+        "TIMER": 692,
+        "TRADE": 39,
+        "QUOTE": 57,
+        "DEPTH": 45,
+        "META": 1
+      },
+      "selected_events": 863,
+      "attempt_stages": {},
+      "min_trade": 0.04096,
+      "max_trade": 0.04114
+    },
+    {
+      "symbol": "AKEUSDT",
+      "lower": 0.045326,
+      "upper": 0.054242,
+      "width": 0.008916,
+      "created": 1789906155218,
+      "expires": 1789911555218,
+      "id": "EP_11d201c2090169e21ec64798",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 64,
+        "TRADE": 8141,
+        "QUOTE": 2347,
+        "TIMER": 606,
+        "DEPTH": 138,
+        "GAP": 5,
+        "META": 5,
+        "OI": 13
+      },
+      "selected_events": 11302,
+      "attempt_stages": {},
+      "min_trade": 0.046407,
+      "max_trade": 0.05039
+    },
+    {
+      "symbol": "CELRUSDT",
+      "lower": 0.003901,
+      "upper": 0.004065,
+      "width": 0.00016400000000000008,
+      "created": 1789906220894,
+      "expires": 1789911620894,
+      "id": "EP_cb71636e177350a3f1b26a71",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 11,
+        "TIMER": 570,
+        "TRADE": 499,
+        "QUOTE": 902,
+        "DEPTH": 106,
+        "META": 2,
+        "OI": 1,
+        "GAP": 5
+      },
+      "selected_events": 2096,
+      "attempt_stages": {},
+      "min_trade": 0.00396,
+      "max_trade": 0.004008
+    },
+    {
+      "symbol": "FUSDT",
+      "lower": 0.003608,
+      "upper": 0.003635,
+      "width": 2.7000000000000114e-05,
+      "created": 1789906658693,
+      "expires": 1789912058693,
+      "id": "EP_d7de46a424836b4ee6a863f7",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 5
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "XMRUSDT",
+      "lower": 523.07,
+      "upper": 526.16,
+      "width": 3.089999999999918,
+      "created": 1789906917717,
+      "expires": 1789912317717,
+      "id": "EP_0a789af31cc268949bb84ce9",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 4
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "SUSDT",
+      "lower": 0.03533,
+      "upper": 0.03599,
+      "width": 0.0006600000000000009,
+      "created": 1789907009053,
+      "expires": 1789912409053,
+      "id": "EP_a5030435c47e3e0673412406",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 10
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "MUSDT",
+      "lower": 1.495,
+      "upper": 1.5513,
+      "width": 0.056299999999999795,
+      "created": 1789908460672,
+      "expires": 1789913860672,
+      "id": "EP_f75b512cac0007a9e3e44998",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 95,
+        "OI": 20,
+        "META": 5
+      },
+      "selected_events": 44,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "BANKUSDT",
+      "lower": 0.03298,
+      "upper": 0.03326,
+      "width": 0.00027999999999999553,
+      "created": 1789908464195,
+      "expires": 1789913864195,
+      "id": "EP_ab64ffe984b889f52f0e5ec7",
+      "version": 1,
+      "rotations": 5,
+      "events": {
+        "BAR": 4
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "LSKUSDT",
+      "lower": 0.37238,
+      "upper": 0.37734,
+      "width": 0.00496000000000002,
+      "created": 1789908464715,
+      "expires": 1789913864715,
+      "id": "EP_50a6c6aa61a8ac9ca9488a60",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 12,
+        "OI": 6,
+        "META": 1
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "CUSDT",
+      "lower": 0.07548,
+      "upper": 0.07706,
+      "width": 0.001579999999999998,
+      "created": 1789908466565,
+      "expires": 1789913866565,
+      "id": "EP_83e3a307cef4d079dc809702",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 10,
+        "OI": 6,
+        "META": 1
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "PONSUSDT",
+      "lower": 0.5705,
+      "upper": 0.5776,
+      "width": 0.007099999999999995,
+      "created": 1789909227052,
+      "expires": 1789914627052,
+      "id": "EP_ba8d4fc2fa217f6d2d2fbb54",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 6
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "COTIUSDT",
+      "lower": 0.017553,
+      "upper": 0.017792,
+      "width": 0.00023899999999999963,
+      "created": 1789910006546,
+      "expires": 1789915406546,
+      "id": "EP_0daabeb2495ab2f17976f36b",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 28,
+        "OI": 3,
+        "META": 1
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "EVAAUSDT",
+      "lower": 0.6533,
+      "upper": 0.6766,
+      "width": 0.023299999999999987,
+      "created": 1789910108691,
+      "expires": 1789915508691,
+      "id": "EP_b6e191125b31afe77ada530f",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 28
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "SKLUSDT",
+      "lower": 0.004347,
+      "upper": 0.0044,
+      "width": 5.3000000000000096e-05,
+      "created": 1789910334412,
+      "expires": 1789915734412,
+      "id": "EP_8859c1a8f3cb3e9753ced39e",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 2,
+        "OI": 4
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "ARXUSDT",
+      "lower": 0.1871,
+      "upper": 0.1893,
+      "width": 0.0022000000000000075,
+      "created": 1789910435897,
+      "expires": 1789915835897,
+      "id": "EP_51638f829da395406c40a804",
+      "version": 1,
+      "rotations": 5,
+      "events": {
+        "BAR": 6
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "ONEUSDT",
+      "lower": 0.0037274,
+      "upper": 0.0039223,
+      "width": 0.00019490000000000002,
+      "created": 1789911679773,
+      "expires": 1789917079773,
+      "id": "EP_55d07586086b9032d05936fb",
+      "version": 1,
+      "rotations": 5,
+      "events": {
+        "BAR": 6
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "CAPUSDT",
+      "lower": 0.0445,
+      "upper": 0.04558,
+      "width": 0.0010800000000000046,
+      "created": 1789911681048,
+      "expires": 1789917081048,
+      "id": "EP_ac4d164b2a70d6ea00a93298",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 48,
+        "OI": 16,
+        "META": 7
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "MARSCOINUSDT",
+      "lower": 0.09406,
+      "upper": 0.09525,
+      "width": 0.0011899999999999966,
+      "created": 1789912276322,
+      "expires": 1789917676322,
+      "id": "EP_52fa9cf84b68dc6547f77bcc",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 26,
+        "OI": 11,
+        "GAP": 2,
+        "TIMER": 7,
+        "TRADE": 20,
+        "QUOTE": 10,
+        "DEPTH": 14,
+        "META": 3
+      },
+      "selected_events": 83,
+      "attempt_stages": {},
+      "min_trade": 0.09467,
+      "max_trade": 0.09475
+    },
+    {
+      "symbol": "CTSIUSDT",
+      "lower": 0.02869,
+      "upper": 0.02943,
+      "width": 0.0007400000000000011,
+      "created": 1789912277322,
+      "expires": 1789917677322,
+      "id": "EP_1e3bf7cfdc56c4cbe3c8aa9a",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 31,
+        "OI": 8,
+        "META": 1
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "DASHUSDT",
+      "lower": 55.49,
+      "upper": 55.9,
+      "width": 0.4099999999999966,
+      "created": 1789912280537,
+      "expires": 1789917680537,
+      "id": "EP_086e5ec9e5b038874b06f08c",
+      "version": 1,
+      "rotations": 5,
+      "events": {
+        "BAR": 8
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "CELRUSDT",
+      "lower": 0.003961,
+      "upper": 0.004107,
+      "width": 0.0001460000000000003,
+      "created": 1789913376498,
+      "expires": 1789918776498,
+      "id": "EP_aabf2320b9ace70e7c10f6c4",
+      "version": 1,
+      "rotations": 5,
+      "events": {
+        "BAR": 9
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "B2USDT",
+      "lower": 0.4499,
+      "upper": 0.4576,
+      "width": 0.007699999999999985,
+      "created": 1789913377326,
+      "expires": 1789918777326,
+      "id": "EP_4dd1bd586bdd27eedfd8eb0e",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 22,
+        "OI": 4,
+        "META": 2
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "MYXUSDT",
+      "lower": 0.07751,
+      "upper": 0.07845,
+      "width": 0.0009400000000000103,
+      "created": 1789913382976,
+      "expires": 1789918782976,
+      "id": "EP_f99baee3c43bebbb7bfdccd1",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 6,
+        "OI": 3,
+        "META": 1
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "COTIUSDT",
+      "lower": 0.017838,
+      "upper": 0.018095,
+      "width": 0.0002570000000000003,
+      "created": 1789913386461,
+      "expires": 1789918786461,
+      "id": "EP_715a6bcf9c6136a511eca300",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 11,
+        "OI": 4,
+        "META": 2
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "EVAAUSDT",
+      "lower": 0.6776,
+      "upper": 0.6945,
+      "width": 0.016900000000000026,
+      "created": 1789913970187,
+      "expires": 1789919370187,
+      "id": "EP_a0729d66e5106a1a163ddbe7",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 19,
+        "OI": 3,
+        "META": 2
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "ZAMAUSDT",
+      "lower": 0.09008,
+      "upper": 0.09399,
+      "width": 0.003910000000000011,
+      "created": 1789914453385,
+      "expires": 1789919853385,
+      "id": "EP_2829e94c0ed4dc58c10b4f1e",
+      "version": 1,
+      "rotations": 5,
+      "events": {
+        "BAR": 18,
+        "OI": 2,
+        "META": 1
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "CELRUSDT",
+      "lower": 0.004239,
+      "upper": 0.004498,
+      "width": 0.00025900000000000055,
+      "created": 1789915068749,
+      "expires": 1789920468749,
+      "id": "EP_315dd24359da847f3e2fb0f0",
+      "version": 1,
+      "rotations": 5,
+      "events": {
+        "BAR": 2,
+        "OI": 2
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "MUSDT",
+      "lower": 1.5026,
+      "upper": 1.5408,
+      "width": 0.03820000000000001,
+      "created": 1789915354465,
+      "expires": 1789920754465,
+      "id": "EP_13d177478d9155c9a7ba742a",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 5,
+        "OI": 3
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "PONSUSDT",
+      "lower": 0.5602,
+      "upper": 0.5687,
+      "width": 0.008499999999999952,
+      "created": 1789916123093,
+      "expires": 1789921523093,
+      "id": "EP_5b2bf7485b8a02fc47f78ecd",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 25
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "LITUSDT",
+      "lower": 4.6537,
+      "upper": 4.6933,
+      "width": 0.03960000000000008,
+      "created": 1789916661245,
+      "expires": 1789922061245,
+      "id": "EP_8b5a39f900ef8560d92de356",
+      "version": 1,
+      "rotations": 5,
+      "events": {
+        "BAR": 20
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "CAPUSDT",
+      "lower": 0.04434,
+      "upper": 0.04496,
+      "width": 0.0006200000000000025,
+      "created": 1789916736418,
+      "expires": 1789922136418,
+      "id": "EP_81a2cc128d3e1eed0194ef0b",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 2,
+        "OI": 8
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "BOMEUSDT",
+      "lower": 0.0008892,
+      "upper": 0.0008946,
+      "width": 5.399999999999914e-06,
+      "created": 1789917248573,
+      "expires": 1789922648573,
+      "id": "EP_61163cb66ebff618b89b9e05",
+      "version": 1,
+      "rotations": 5,
+      "events": {
+        "BAR": 19
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "MONUSDT",
+      "lower": 0.0233,
+      "upper": 0.02342,
+      "width": 0.00011999999999999858,
+      "created": 1789917317687,
+      "expires": 1789922717687,
+      "id": "EP_02a1813c56d471a901f6b437",
+      "version": 1,
+      "rotations": 4,
+      "events": {
+        "BAR": 7
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    },
+    {
+      "symbol": "EVAAUSDT",
+      "lower": 0.6569,
+      "upper": 0.6762,
+      "width": 0.019299999999999984,
+      "created": 1789917352892,
+      "expires": 1789922752892,
+      "id": "EP_c090f793665572a9886368a7",
+      "version": 1,
+      "rotations": 5,
+      "events": {
+        "BAR": 13,
+        "OI": 10
+      },
+      "selected_events": 0,
+      "attempt_stages": {},
+      "min_trade": null,
+      "max_trade": null
+    }
+  ],
+  "trade_reasons": {
+    "NO_ELIGIBLE_SETUP": 8830,
+    "DELAYED_TRADE": 26291
+  },
+  "candidates": [],
+  "universe_changes": [
+    {
+      "at": 1789906027323,
+      "selected": [
+        "4USDT",
+        "AKEUSDT",
+        "B2USDT",
+        "CELRUSDT",
+        "CHIPUSDT",
+        "DASHUSDT",
+        "ENAUSDT",
+        "HEIUSDT",
+        "MUSDT",
+        "ONEUSDT",
+        "PIEVERSEUSDT",
+        "PTBUSDT"
+      ]
+    },
+    {
+      "at": 1789909442851,
+      "selected": [
+        "ACEUSDT",
+        "EGLDUSDT",
+        "ENSOUSDT",
+        "GUSDT",
+        "JTOUSDT",
+        "LSKUSDT",
+        "PIEVERSEUSDT",
+        "RAYSOLUSDT",
+        "SYNUSDT",
+        "UBUSDT",
+        "WIFUSDT",
+        "\u725b\u6765USDT"
+      ]
+    },
+    {
+      "at": 1789912561597,
+      "selected": [
+        "ARUSDT",
+        "DASHUSDT",
+        "EPICUSDT",
+        "FUSDT",
+        "HEIUSDT",
+        "LSKUSDT",
+        "MARSCOINUSDT",
+        "MITOUSDT",
+        "PTBUSDT",
+        "STRKUSDT",
+        "UBUSDT",
+        "\u725b\u6765USDT"
+      ]
+    },
+    {
+      "at": 1789914224721,
+      "selected": [
+        "AKEUSDT",
+        "ARUSDT",
+        "B2USDT",
+        "EPICUSDT",
+        "LITUSDT",
+        "MARSCOINUSDT",
+        "MYXUSDT",
+        "ONEUSDT",
+        "RAYSOLUSDT",
+        "SYNUSDT",
+        "WIFUSDT",
+        "\u725b\u6765USDT"
+      ]
+    },
+    {
+      "at": 1789914765587,
+      "selected": [
+        "4USDT",
+        "ARUSDT",
+        "BANKUSDT",
+        "CTSIUSDT",
+        "CUSDT",
+        "DASHUSDT",
+        "EPICUSDT",
+        "FILUSDT",
+        "HEIUSDT",
+        "ONEUSDT",
+        "PIEVERSEUSDT",
+        "SYNUSDT"
+      ]
+    }
+  ]
+}
