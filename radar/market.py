@@ -73,7 +73,7 @@ def _heat_score(f):
     v5=max(0.,f.get('volume_5m_z') or 0.);v10=max(0.,f.get('volume_10m_z') or 0.)
     oi5=abs(f.get('oi_growth_z') or 0.);oi15=abs(f.get('oi_growth_15m_z') or 0.)
     retention=f.get('oi_retention');retention=.5 if retention is None else retention
-    base=v5+.6*v10+.75*oi5+.45*oi15+.75*retention
+    base=0.8*v5+0.5*v10+1.8*oi5+1.2*oi15+1.8*retention
     mult={'SUSTAINED_HOT':1.25,'HOT_RETAINED':1.15,'NEW_IMPULSE':.90,
           'COOLING':.70,'FLUSH_EVENT':1.05,'NORMAL':.20,'DEAD_BURST':0.0}.get(state,.2)
     return base*mult
@@ -212,7 +212,12 @@ class Feed:
         for turnover,sym,meta,move,q,quick_score in chosen:
             state=self.engine.state(sym);f=features(state,c);heat=f.get('heat_state','NORMAL');score=_heat_score(f)
             compressed=state['episode'] is not None
-            monitor_eligible=heat not in ('NORMAL','DEAD_BURST') or compressed or sym in pins
+            ret=f.get('oi_retention') or 0.
+            oi5=f.get('oi_growth_z') or 0.
+            oi15=f.get('oi_growth_15m_z') or 0.
+            v5=f.get('volume_5m_z') or 0.
+            has_oi_backing=(ret>=0.70 and (oi5>=0.5 or oi15>=0.5 or v5>=0.5))
+            monitor_eligible=heat not in ('NORMAL','DEAD_BURST') or (compressed and has_oi_backing) or sym in pins
             rankings.append(dict(symbol=sym,score=score,turnover=turnover,features=f,heat_state=heat,
                                  quick=q,quick_score=quick_score,compressed=compressed,
                                  monitor_eligible=monitor_eligible,tradable=meta['status']=='TRADING'))
