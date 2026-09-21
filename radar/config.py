@@ -19,8 +19,15 @@ class Config:
     max_exchange_lag_ms: int = 3000
     max_oi_age_ms: int = 900000
     min_turnover: float = 10000000
-    universe_size: int = 12
-    candidate_count: int = 40
+    universe_size: int = 24
+    candidate_count: int = 160
+    quick_scan_count: int = 280
+    heat_volume_window_bars: int = 5
+    heat_lookback_windows: int = 6
+    heat_retention_min: float = 0.45
+    heat_dead_retention_max: float = 0.20
+    heat_volume_alive_z: float = 0.50
+    heat_event_z: float = 2.00
     refresh_seconds: int = 300
     compression_bars: int = 30
     baseline_bars: int = 90
@@ -39,6 +46,11 @@ class Config:
     require_depth: bool = True
     clock_uncertainty_ms: int = 2000
     max_disk_mb: int = 10000
+    queue_maxsize: int = 50000
+    worker_batch_size: int = 512
+    reducer_batch_size: int = 512
+    oi_poll_seconds: int = 60
+    overload_queue_delay_ms: int = 1500
 
     def validate(self):
         if self.mode not in ('paper','shadow','collection'):
@@ -59,12 +71,15 @@ class Config:
                 raise ValueError(f'{f.name} must be an integer')
         if not 0<self.risk_fraction<=self.total_risk_fraction<=self.daily_loss_fraction<1:
             raise ValueError('Require risk <= total risk <= daily budget < 1')
-        for k in ('partial_fraction','contraction_ratio','max_drift_fraction','aggression_fraction','depth_participation'):
+        for k in ('partial_fraction','contraction_ratio','max_drift_fraction','aggression_fraction','depth_participation','heat_retention_min','heat_dead_retention_max'):
             if not 0<getattr(self,k)<1:raise ValueError(k+' must be a fraction in (0,1)')
         for k in ('fee_fraction','slippage_fraction','funding_allowance_fraction'):
             if not 0<=getattr(self,k)<1:raise ValueError(k+' must be in [0,1)')
         if self.compression_bars<10 or self.baseline_bars<self.compression_bars:raise ValueError('Insufficient structural history')
         if self.candidate_count<self.universe_size:raise ValueError('candidate_count must cover universe_size')
+        if self.quick_scan_count<self.candidate_count:raise ValueError('quick_scan_count must cover candidate_count')
+        if self.heat_dead_retention_max>=self.heat_retention_min:raise ValueError('dead heat retention must be below retained heat threshold')
+        if self.heat_volume_window_bars<3 or self.heat_lookback_windows<4:raise ValueError('insufficient heat persistence history')
         return self
 
     def to_dict(self):return asdict(self)

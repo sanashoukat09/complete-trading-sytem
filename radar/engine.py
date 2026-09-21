@@ -3,15 +3,17 @@ import sqlite3,json,threading,math,time,os
 from dataclasses import asdict
 from pathlib import Path
 from contextlib import contextmanager
-from .model import Event,dumps,digest,positive,round_step
+from .model import Event,dumps,digest,positive,round_step,pack_event_payload,event_from_payload
 from .strategy import initial,observe,features
 from .config import Config
 
 SCHEMA='''
 PRAGMA journal_mode=WAL;
 PRAGMA synchronous=FULL;
+PRAGMA wal_autocheckpoint=256;
+PRAGMA journal_size_limit=67108864;
 CREATE TABLE IF NOT EXISTS manifest(key TEXT PRIMARY KEY,value TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS events(seq INTEGER PRIMARY KEY AUTOINCREMENT,identity TEXT UNIQUE NOT NULL,hash TEXT NOT NULL,payload TEXT NOT NULL,applied INTEGER NOT NULL DEFAULT 0,error TEXT);
+CREATE TABLE IF NOT EXISTS events(seq INTEGER PRIMARY KEY AUTOINCREMENT,identity TEXT UNIQUE NOT NULL,hash TEXT NOT NULL,payload BLOB NOT NULL,applied INTEGER NOT NULL DEFAULT 0,error TEXT);
 CREATE INDEX IF NOT EXISTS pending_events ON events(applied,seq);
 CREATE TABLE IF NOT EXISTS runtime_health(id INTEGER PRIMARY KEY CHECK(id=1),payload TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS states(symbol TEXT PRIMARY KEY,payload TEXT NOT NULL);
@@ -37,7 +39,7 @@ class Engine:
         if row and row[0]!=cfg:
             self.db.close();raise ValueError('Configuration differs from frozen database. Use a new data directory for a new experiment.')
         self.db.execute("INSERT OR IGNORE INTO manifest VALUES('config',?)",(cfg,))
-        self.db.execute("INSERT OR IGNORE INTO manifest VALUES('schema','6.0.0')")
+        self.db.execute("INSERT OR IGNORE INTO manifest VALUES('schema','6.1.3-persistent-heat')")
         # Hash executable implementation, not only configuration.
         code=digest({p.name:p.read_text(encoding='utf-8') for p in sorted(Path(__file__).parent.glob('*.py'))})
         old=self.db.execute("SELECT value FROM manifest WHERE key='code_hash'").fetchone()
@@ -55,6 +57,10 @@ class Engine:
 
     @locked_read
     def state(self,symbol):
+        row=self.db.execute('SELECT payload FROM states WHERE symbol=?',(symbol,)).fetchone()
+        return json.loads(row[0]) if row else initial()
+
+    def _state_unlocked(self,symbol):
         row=self.db.execute('SELECT payload FROM states WHERE symbol=?',(symbol,)).fetchone()
         return json.loads(row[0]) if row else initial()
 
@@ -76,7 +82,7 @@ class Engine:
         prepared=[]
         for event in events:
             if event.kind=='BAR' and event.data.get('close_ms',event.received)>=event.received-self.cfg.clock_uncertainty_ms:continue
-            event.validate();prepared.append((event,event.identity(),event.semantic_hash(),dumps(asdict(event))))
+            event.validate();prepared.append((event,event.identity(),event.semantic_hash(),pack_event_payload(dumps(asdict(event)))))
         if not prepared:return []
         if Path(self.path).stat().st_size+sum(p.stat().st_size for p in Path(self.path).parent.glob(Path(self.path).name+'-wal'))>self.cfg.max_disk_mb*1024*1024:
             raise OSError('Configured journal disk budget reached; stop and archive the experiment before restarting')
@@ -94,16 +100,22 @@ class Engine:
 
     def recover(self):
         while True:
-            with self.lock:rows=self.db.execute('SELECT seq,payload FROM events WHERE applied=0 ORDER BY seq LIMIT 32').fetchall()
+            with self.lock:rows=self.db.execute('SELECT seq,payload FROM events WHERE applied=0 ORDER BY seq LIMIT ?',
+                                                (self.cfg.reducer_batch_size,)).fetchall()
             if not rows:return
             try:
                 # Bounded groups amortize disk sync. A failed group rolls back every state/offset effect.
                 with self.transaction():
+                    state_cache={};dirty=set();applied=[]
                     for row in rows:
                         if self.db.execute('SELECT applied FROM events WHERE seq=?',(row['seq'],)).fetchone()[0]:continue
-                        e=Event(**json.loads(row['payload']));self._reduce(e,row['seq'])
+                        e=event_from_payload(row['payload']);self._reduce(e,row['seq'],state_cache,dirty)
                         if self.fault:self.fault('before_commit',row['seq'])
-                        self.db.execute('UPDATE events SET applied=1,error=NULL WHERE seq=?',(row['seq'],))
+                        applied.append((row['seq'],))
+                    if dirty:
+                        self.db.executemany('INSERT OR REPLACE INTO states VALUES(?,?)',
+                                            [(sym,dumps(state_cache[sym])) for sym in sorted(dirty)])
+                    if applied:self.db.executemany('UPDATE events SET applied=1,error=NULL WHERE seq=?',applied)
             except BaseException as exc:
                 with self.lock:self.db.execute('UPDATE events SET error=? WHERE seq=?',(str(exc)[:1000],row['seq']))
                 raise
@@ -112,12 +124,16 @@ class Engine:
         self.db.execute('INSERT OR REPLACE INTO decisions VALUES(?,?,?,?,?,?)',
             ('D_'+digest([e.identity(),action,reason])[:32],seq,e.symbol,action,reason,dumps(payload or {})))
 
-    def _reduce(self,e,seq):
+    def _reduce(self,e,seq,state_cache=None,dirty=None):
         if e.kind=='HEALTH':
             self.db.execute('INSERT OR REPLACE INTO runtime_health VALUES(1,?)',(dumps(dict(e.data,at=e.decision_ms)),));return
         if e.kind=='UNIVERSE':
             self.db.execute('INSERT OR REPLACE INTO universe VALUES(1,?)',(dumps(e.data),));return
-        s=self.state(e.symbol)
+        if state_cache is None:
+            s=self._state_unlocked(e.symbol)
+        else:
+            if e.symbol not in state_cache:state_cache[e.symbol]=self._state_unlocked(e.symbol)
+            s=state_cache[e.symbol]
         before=(s.get('reason'),(s.get('attempt') or {}).get('stage'),(s.get('episode') or {}).get('id'))
         candidate=observe(s,e,self.cfg)
         if e.kind in ('QUOTE','DEPTH','TRADE','TIMER','FUNDING','FUNDING_SYNC','GAP','META'):
@@ -126,14 +142,20 @@ class Engine:
         elif e.kind in ('BAR','TIMER') or before!=(s.get('reason'),(s.get('attempt') or {}).get('stage'),(s.get('episode') or {}).get('id')):
 
             self._decision(e,seq,'WAIT',s['reason'],dict(features=features(s),episode=s['episode'],attempt=s['attempt']))
-        self.db.execute('INSERT OR REPLACE INTO states VALUES(?,?)',(e.symbol,dumps(s)))
+        if state_cache is None:self.db.execute('INSERT OR REPLACE INTO states VALUES(?,?)',(e.symbol,dumps(s)))
+        else:dirty.add(e.symbol)
 
     @locked_read
     def monitoring_pins(self,now,include_expired=False):
         pins={p['symbol'] for p in self.positions()}
         for sym,payload in self.db.execute('SELECT symbol,payload FROM states'):
-            s=json.loads(payload);ep=s.get('episode')
-            if ep and (include_expired or ep['expires']>now) and (s.get('meta') or {}).get('status')=='TRADING':pins.add(sym)
+            s=json.loads(payload);ep=s.get('episode');attempt=s.get('attempt');attention=s.get('attention') or {}
+            # Once a causal attempt exists, keep watching regardless of discovery cooling.
+            # Before an attempt, a one-off burst that fully unwound may release an otherwise
+            # passive balance so scarce live streams follow genuinely active auctions.
+            active_heat=attention.get('heat_state')!='DEAD_BURST'
+            structural=bool(attempt) or (ep and active_heat)
+            if structural and (include_expired or not ep or ep['expires']>now) and (s.get('meta') or {}).get('status')=='TRADING':pins.add(sym)
         return pins
 
     def quote_valid(self,s,now):
@@ -165,9 +187,12 @@ class Engine:
 
     def _propose(self,s,e,seq,a):
         c=self.cfg;now=e.decision_ms;meta=s['meta'];direction=a['direction'];reason=None
-        if not self._selected(e.symbol):reason='NOT_SELECTED'
+        # Discovery/ranking decides where to spend attention. Once a frozen episode and
+        # causal attempt exist, transient rank churn or an OI polling hiccup must not
+        # veto the market evidence that the system is already monitoring.
+        monitored=self._selected(e.symbol) or bool(s.get('episode') and s['episode']['expires']>now)
+        if not monitored:reason='NOT_MONITORED'
         elif not meta or meta.get('status')!='TRADING':reason='NOT_TRADABLE'
-        elif not s['oi'] or now-s['oi'][-1]['at']>c.max_oi_age_ms or features(s)['oi_growth'] is None:reason='OI_WARMUP_OR_STALE'
         elif s['warm_trades']<20:reason='FLOW_WARMUP'
         elif self.db.execute("SELECT 1 FROM positions WHERE symbol=? AND status IN ('PENDING','OPEN')",(e.symbol,)).fetchone():reason='EXPOSURE_ALREADY_EXISTS'
         if reason:s['reason']=reason;self._decision(e,seq,'WAIT',reason,a);return
@@ -199,14 +224,22 @@ class Engine:
             if len(active)>=c.max_positions or existing+risk>equity*c.total_risk_fraction or used+existing+risk>c.initial_equity*c.daily_loss_fraction:
                 raise ValueError('ACCOUNT_RISK_BUDGET')
             if sum(p['entry_reference']*p['original_qty'] for p in active)+entry*qty>equity*c.max_notional_multiple:raise ValueError('ACCOUNT_NOTIONAL_CAP')
-        except (ValueError,ZeroDivisionError) as exc:s['reason']=str(exc);self._decision(e,seq,'WAIT',str(exc),a);return
-        evidence=dict(a,entry=entry,stop=stop,tp1=target,tp2=tp2,quantity=qty,risk=risk,net_rr=rr(target),features=features(s))
+        except (ValueError,ZeroDivisionError) as exc:
+            reason=str(exc)
+            # Valid evidence can arrive after the direct-response price has become poor.
+            # Do not loosen RR and do not chase: require a fresh defended retest instead.
+            if reason in ('INSUFFICIENT_NET_REWARD','STOP_OBSOLETE','PRICE_MOVED_BEYOND_AUTHORIZATION') and s.get('attempt'):
+                s['attempt']['entry_mode']='RETEST_ONLY';reason='WAIT_BETTER_ENTRY_RETEST'
+            s['reason']=reason;self._decision(e,seq,'WAIT',reason,a);return
+        f=features(s);oi_at=s['oi'][-1]['at'] if s['oi'] else None
+        evidence=dict(a,entry=entry,stop=stop,tp1=target,tp2=tp2,quantity=qty,risk=risk,net_rr=rr(target),features=f,
+                      oi_context=dict(available=bool(s['oi']),fresh=bool(oi_at is not None and now-oi_at<=c.max_oi_age_ms),last_at=oi_at))
         s['attempt']['stage']='CONSUMED'
         if c.mode=='shadow':self._decision(e,seq,'SIGNAL','SHADOW_NO_EXECUTION',evidence);return
         pid='P_'+digest([e.symbol,a['id']])[:32]
         if self.db.execute('SELECT 1 FROM positions WHERE id=?',(pid,)).fetchone():return
         p=dict(id=pid,symbol=e.symbol,status='PENDING',direction=direction,original_qty=qty,remaining=0.,
-               entry_reference=entry,entry_price=None,stop=stop,tp1=target,tp2=tp2,partial_done=False,
+               entry_reference=entry,entry_price=None,stop=stop,management_stop=stop,tp1=target,tp2=tp2,partial_done=False,
                created_ms=now,entry_ms=None,closed_ms=None,initial_risk=risk,risk_remaining=risk,
                gross=0.,fees=0.,funding=0.,net=0.,attempt=a['id'],episode=a['episode'],evidence=evidence,
                entry_event=e.identity(),last_fill_seq=0,pending_reason=None,funding_ids=[])
@@ -270,7 +303,8 @@ class Engine:
                 price=s['quote']['bid'] if d==1 else s['quote']['ask']
             reason=p.get('pending_reason')
             if s['meta'] and s['meta']['status']!='TRADING':reason=reason or 'INVALIDATION_EXIT'
-            if price and d*(price-p['stop'])<=0:reason='STOP_HIT'
+            active_stop=p.get('management_stop',p['stop'])
+            if price and d*(price-active_stop)<=0:reason='BREAKEVEN_PROTECT' if p.get('partial_done') and active_stop!=p['stop'] else 'STOP_HIT'
             elif now-p['entry_ms']>=c.max_hold_ms:reason=reason or 'TIME_EXIT'
             elif price and p['tp2'] and d*(price-p['tp2'])>=0:reason=reason or 'TP2_HIT'
             elif price and not p['partial_done'] and d*(price-p['tp1'])>=0:reason=reason or 'TP1_HIT'
@@ -284,14 +318,21 @@ class Engine:
             except ValueError:
                 self._save_position(p);self._decision(e,seq,'WAIT','EXIT_AWAIT_VALID_LIQUIDITY',dict(position_id=p['id'],reason=reason));continue
             self._fill(p,e,seq,-d,qty,fill,reason)
-            if reason=='TP1_HIT':p['partial_done']=True
+            if reason=='TP1_HIT':
+                p['partial_done']=True
+                # After banking the structural first objective, protect the remainder
+                # around cost-adjusted breakeven rather than leaving the full initial
+                # structural risk on the table.
+                cost_buffer=p['entry_price']*(2*c.fee_fraction+c.slippage_fraction)
+                be=p['entry_price']+d*cost_buffer
+                p['management_stop']=max(p['stop'],be) if d==1 else min(p['stop'],be)
             p['pending_reason']=None;self._save_position(p)
 
     def status(self):
         with self.lock:
             pending=self.db.execute('SELECT COUNT(*) FROM events WHERE applied=0').fetchone()[0]
             u=self.db.execute('SELECT payload FROM universe WHERE id=1').fetchone()
-            return dict(mode=self.cfg.mode,release='experimental-paper',pending_events=pending,
+            return dict(mode=self.cfg.mode,release='6.1.3-live-data-paper',pending_events=pending,
                         processed_events=self.db.execute('SELECT COUNT(*) FROM events WHERE applied=1').fetchone()[0],
                         runtime_health=(lambda r:json.loads(r[0]) if r else {})(self.db.execute('SELECT payload FROM runtime_health WHERE id=1').fetchone()),
                         universe=json.loads(u[0]) if u else {},positions=self.positions(),

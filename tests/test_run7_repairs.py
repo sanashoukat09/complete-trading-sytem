@@ -3,7 +3,7 @@ from dataclasses import replace
 import pytest
 from radar.engine import Engine
 from radar.config import Config
-from radar.model import Event,dumps
+from radar.model import Event,dumps,event_from_payload,unpack_event_payload
 from radar.strategy import observe,compression,initial
 from radar.market import Feed
 from radar.__main__ import enrich_status
@@ -32,7 +32,7 @@ def test_batch_fault_rolls_back_state_and_all_offsets(eng):
 def test_queue_delayed_quote_cannot_fill_pending(eng,tmp_path):
  source=Engine(tmp_path/'source.db');setup(source)
  for row in source.db.execute('select payload from events order by seq'):
-  eng.ingest(Event(**json.loads(row[0])))
+  eng.ingest(event_from_payload(row[0]))
   if eng.positions():break
  source.close();p=eng.positions()[0];now=p['created_ms'];assert p['status']=='PENDING'
  ev=normalize(dict(e='bookTicker',s=SYM,E=now+100,u=now+100,b='100.45',a='100.47',B='100',A='100'),now+100)
@@ -44,7 +44,7 @@ def test_processed_clock_is_persisted_and_quote_age_not_rewritten(eng):
  ev=Event('QUOTE',SYM,'q',BASE,BASE,dict(bid=100,ask=101),processed_ms=BASE+5000)
  eng.ingest(ev);s=eng.state(SYM)
  assert s['quote']['received']==BASE and not eng.quote_valid(s,BASE+5000)
- assert json.loads(eng.db.execute('select payload from events').fetchone()[0])['processed_ms']==BASE+5000
+ assert json.loads(unpack_event_payload(eng.db.execute('select payload from events').fetchone()[0]))['processed_ms']==BASE+5000
 
 def test_timer_preserves_flow_blocker(eng):
  bootstrap(eng);eng.ingest(Event('TRADE',SYM,'delayed',BASE,BASE+10000,dict(trade_id=1,price=100.,quantity=1.,buyer_maker=False)))
@@ -101,9 +101,12 @@ def test_universe_change_preserves_existing_socket_tasks(eng):
   async def parked(*a):await asyncio.Event().wait()
   f.stream=parked
   try:
-   await f.sync_streams(['AUSDT']);a=f._subscriptions[('market','AUSDT')]
-   await f.sync_streams(['AUSDT','BUSDT']);assert f._subscriptions[('market','AUSDT')] is a and not a.cancelled()
-   await f.sync_streams(['AUSDT']);assert f._subscriptions[('market','AUSDT')] is a
+   await f.sync_streams(['AUSDT']);market=f._subscriptions['market'];public=f._subscriptions['public']
+   await f.sync_streams(['AUSDT','BUSDT'])
+   assert f._subscriptions['market'] is market and f._subscriptions['public'] is public
+   assert not market.cancelled() and f._desired['market']=={'AUSDT','BUSDT'}
+   await f.sync_streams(['AUSDT'])
+   assert f._subscriptions['market'] is market and f._desired['market']=={'AUSDT'}
   finally:
    for t in f.stream_tasks:t.cancel()
    await asyncio.gather(*f.stream_tasks,return_exceptions=True)
@@ -175,7 +178,7 @@ def test_full_feed_lifecycle_with_clock_and_independent_pollers(tmp_path):
 
 def test_batch_and_single_reducers_match(tmp_path):
  source=Engine(tmp_path/'single.db');setup(source)
- batch=Engine(tmp_path/'batch.db');events=[Event(**json.loads(r[0])) for r in source.db.execute('select payload from events order by seq')]
+ batch=Engine(tmp_path/'batch.db');events=[event_from_payload(r[0]) for r in source.db.execute('select payload from events order by seq')]
  for i in range(0,len(events),32):batch.ingest_many(events[i:i+32])
  assert batch.positions(False)==source.positions(False)
  assert batch.state(SYM)==source.state(SYM)

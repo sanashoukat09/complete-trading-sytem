@@ -1,12 +1,9 @@
-# Environments & Bytecode
 .venv/
 __pycache__/
 .pytest_cache/
-build/
-*.egg-info/
+data*/
+*.db
 *.db-wal
 *.db-shm
-
-# Large raw data files (kept on local disk, excluded from git to stay under GitHub's 100MB limit)
-data-paper-v61/radar.db
-data-paper-v61/full_db_chunks/
+build/
+*.egg-info/

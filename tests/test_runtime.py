@@ -2,7 +2,7 @@ import json,sqlite3,random,pytest,math
 from dataclasses import replace
 from radar.config import Config
 from radar.engine import Engine
-from radar.model import Event,dumps
+from radar.model import Event,dumps,event_from_payload,unpack_event_payload
 from radar.market import normalize,candle,metadata
 from .fixtures import *
 
@@ -66,14 +66,16 @@ def test_closed_attempt_never_reenters_after_restart(eng):
 def test_quote_invalid(eng,bid,ask,at,received):
  assert not eng.quote_valid({'quote':dict(bid=bid,ask=ask,at=at,received=received)},BASE)
 
-def test_no_oi_no_entry(eng):
+def test_mature_failed_auction_does_not_require_fresh_oi(eng):
  now,tid=setup(eng)
- # A separate fixture has no injected eligibility: replay all events except OI.
- events=[Event(**json.loads(r[0])) for r in eng.db.execute("SELECT payload FROM events ORDER BY seq")]
+ # OI is discovery/context, not a veto once a frozen balance and causal attempt exist.
+ events=[event_from_payload(r[0]) for r in eng.db.execute("SELECT payload FROM events ORDER BY seq")]
  e2=Engine(eng.path+'.withoutoi',eng.cfg)
  for e in events:
   if e.kind!='OI':e2.ingest(e)
- assert not e2.positions();e2.close()
+ ps=e2.positions();assert len(ps)==1
+ assert ps[0]['evidence']['oi_context']['available'] is False
+ e2.close()
 
 def test_shadow_never_executes(tmp_path):
  e=Engine(tmp_path/'s.db',Config(mode='shadow'));setup(e)
@@ -85,7 +87,7 @@ def test_collection_never_signals(tmp_path):
 
 def test_replay_identical_decisions_and_state(eng):
  setup(eng);e2=Engine(eng.path+'.replay',eng.cfg)
- for r in eng.db.execute('SELECT payload FROM events ORDER BY seq'):e2.ingest(Event(**json.loads(r[0])))
+ for r in eng.db.execute('SELECT payload FROM events ORDER BY seq'):e2.ingest(event_from_payload(r[0]))
  assert e2.status()==eng.status();assert e2.state(SYM)==eng.state(SYM);e2.close()
 
 def test_forming_bar_excluded(eng):
@@ -211,7 +213,7 @@ def test_no_compression_no_setup(eng):
  bootstrap(eng)
  # Fresh independent sequence with non-contracting directional bars, no fabricated setup.
  e2=Engine(eng.path+'.trend')
- events=[Event(**json.loads(r[0])) for r in eng.db.execute('SELECT payload FROM events ORDER BY seq')]
+ events=[event_from_payload(r[0]) for r in eng.db.execute('SELECT payload FROM events ORDER BY seq')]
  for ev in events:
   if ev.kind=='BAR':
    i=(ev.data['open_ms']-(BASE-120*60000))//60000
@@ -244,7 +246,7 @@ def test_price_quantity_scaling_preserves_direction(tmp_path,scale):
  original=Engine(tmp_path/'original.db');setup(original)
  transformed=Engine(tmp_path/'scaled.db')
  for row in original.db.execute('SELECT payload FROM events ORDER BY seq'):
-  e=Event(**json.loads(row[0]));d=dict(e.data)
+  e=event_from_payload(row[0]);d=dict(e.data)
   if e.kind=='META':
    d['tick_size']*=scale
    for k in ('step_size','min_qty','max_qty'):d[k]/=scale
@@ -291,7 +293,7 @@ def test_unclean_process_exit_replays_pending_event(tmp_path):
  script="""
 import os,sys
 from radar.engine import Engine
-from radar.model import Event
+from radar.model import Event,event_from_payload,unpack_event_payload
 e=Engine(sys.argv[1]);e.fault=lambda *args:os._exit(23)
 e.ingest(Event('TIMER','TESTUSDT','crash',1800000000000,1800000000000,{}))
 """

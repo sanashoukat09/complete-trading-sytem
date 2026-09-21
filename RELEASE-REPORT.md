@@ -1,123 +1,160 @@
-# Compression Radar 6.1 — recorded-run audit and implemented repairs
+# Compression Radar 6.1.3 — Release Report
 
-Date: 20 September 2026. Input: `compression_radar(6).zip`.
+Date: 21 September 2026
 
-## Verdict
+## Release decision
 
-**The supplied run was not collecting sufficiently fresh and complete data to evaluate the strategy's trading edge. Both proposed fixes were real issues. Additional implementation and dashboard defects were found and repaired.**
+6.1.3 is the completed **live-public-data / paper-execution** Spring+Upthrust release. It repairs the runtime defects demonstrated by the full 6.1 run, strengthens the failed-auction event contract, verifies the complete paper execution/manager lifecycle in both directions, and updates Binance USDⓈ-M WebSocket routing for the 2026 endpoint migration.
 
-This deliverable updates the supplied **V6 code and its added dashboard**. It is not another replacement architecture. It remains an experimental public-data paper/shadow system with no exchange order placement. Passing software tests does not establish an accurate or profitable strategy in every market.
+It deliberately contains **no authenticated real-money order transport**. The supported deployment is live market collection plus shadow/paper decisions. No future win rate, expectancy or “best result” is guaranteed.
 
-The repairs preserve entry, structural stop, reward-after-costs checks, shared account risk limits, partial/final exit accounting, and paper-only execution. They do not loosen stale-data checks to manufacture trades. The compression baseline calculation changes explicitly to comparable-duration windows; this is a strategy definition change that needs a new experiment.
+## What the full 6.1 run proved
 
-## What your recorded run actually contains
+The complete supplied history contains **1,340,389 events**, **94,603 decisions**, **0 positions** and **0 outcomes**, spanning 20 Sep 2026 18:18:23 UTC through 21 Sep 2026 01:04:12 UTC.
 
-The database was recovered with its supplied WAL and copied using SQLite backup. Integrity check: `ok`. The uploaded archive and original working extraction were retained. The recovered snapshot has **104,700 events**, 59 symbol states, 30,035 decisions, **zero positions**, and **zero outcomes**. Recorded receipt timestamps span **12:06:33–16:04:36 UTC on 20 September 2026** (approximately 17:06–21:04 Pakistan time).
+The key cause of the zero-trade run was operational rather than simply “no setup”:
 
-| Observation | Recorded result | Meaning |
-|---|---:|---|
-| Reconstructed compression episodes | 38 | Historical outputs of the original algorithm, not independently proven accumulation |
-| Episodes with no trade events while active | 34 | Tick-level setup confirmation was unavailable for most ranges |
-| Trade events | 35,121 | Incomplete subscribed-stream sample |
-| Trades rejected as delayed by original logic | 26,291 (74.9%) | Most observed trades were not eligible as current evidence |
-| Median trade receipt minus trade timestamp | 203,253 ms | Roughly 203 seconds, far beyond the 3-second guard |
-| Median quote delay | 153,328 ms | Dashboard receipt alone was not proof of live prices |
-| Median depth delay | 135,378 ms | Depth-based fills could not reliably use these observations |
-| Completed setup candidates in original event reconstruction | 0 | No confirmed candidate reached the proposal layer in available inputs |
-| Episodes with a later recorded bar crossing either edge within 30 minutes | 26 | Price movement existed; this is not proof of an executable missed trade |
+- TRADE events: **1,257,115**.
+- Median exchange/event → local receipt delay: **533 ms**; p95 **2,690 ms**; only **2.32%** exceeded 3 seconds.
+- Median local receipt → strategy processing delay: **11,084 ms** overall and **11,074 ms** on trades; p95 trade delay **13,762 ms**.
+- Worst recorded received burst: **836 events in one second**, **1,675 across three seconds**.
+- Decision funnel included **222 WAIT_BOUNDARY_SWEEP**, **33 WAIT_RECLAIM**, and **7 OUTSIDE_ATTEMPT** cycles, so zero positions did not mean the scanner never approached a setup.
 
-Trade publication timestamps in raw `E` fields also lagged receipt by about 203 seconds at the median. This was not merely the difference between trade time and aggregation publication time. The archive cannot isolate how much came from network/socket buffering, application backpressure, local disk/CPU, or clock behavior. Queue and clock telemetry were missing from the original run. We therefore fix confirmed bottlenecks and add those measurements instead of declaring an unproven sole cause.
+Because the strategy correctly rejected evidence older than its freshness guard, the old engine was frequently making usable evidence stale inside its own queue before the decision layer could use it.
 
-### Were trades missed?
+The archive also does **not** contain historical QUOTE or DEPTH rows. They existed live in memory/health, but were not retained in the recovered event journal. Therefore no later analysis can honestly reconstruct exact historical executable bid/ask, depth-weighted fill or slippage from that run.
 
-**There is no demonstrated completed, valid setup that was incorrectly refused execution in this recording. There is substantial evidence of missed monitoring.** The original observer reconstruction emitted zero candidates. Most ranges had no ticks, and most recorded ticks were delayed. A later candle wick beyond a range cannot establish the order of sweep, reclaim, response, aggression, fresh executable quotes, and affordable risk/reward.
+## Historical setup-path diagnostic
 
-These are the four original episodes with any recorded ticks while active:
+For diagnosis only, 6.1.3 was replayed over symbols that actually formed balances/attempts after removing recorded GAP artifacts and normalizing local receipt timing. Quote/depth were **not invented**. This is therefore a strategy-path counterfactual, not a backtest or executable trade ledger.
 
-| Symbol | Frozen lower–upper | Recorded ticks | Recorded trade-price minimum–maximum |
-|---|---|---:|---|
-| CHIPUSDT | 0.04087–0.04118 | 39 | 0.04096–0.04114 |
-| AKEUSDT | 0.045326–0.054242 | 8,141 | 0.046407–0.05039 |
-| CELRUSDT | 0.003901–0.004065 | 499 | 0.00396–0.004008 |
-| MARSCOINUSDT | 0.09406–0.09525 | 20 | 0.09467–0.09475 |
+After the final genuine-sweep and mixed-response repairs it produces **29 unique Spring/Upthrust candidate paths**: **11 reach the frozen-range midpoint before structural stop and 18 hit structural stop first**. The pre-fix observer produced 37 candidates with the same 11 midpoint-first cases; the quality repair removed eight stop-first micro/noisy paths without deleting those 11 cases.
 
-Those observed prices stayed inside their corresponding ranges. Other episodes may have had opportunities while not subscribed, but assigning them an entry or PnL would invent unavailable evidence. `audit/episode-coverage.csv` lists all 38 original episodes, range edges, widths, rotations, tick/depth counts, available subsequent bars, and later boundary crossings. Later highs/lows are descriptive observations, not trade returns. Missing bars and observations are exposed rather than filled synthetically.
+Examples preserved by the final observer:
 
-## Implemented repairs
+| Symbol | Setup | Decision UTC | Trigger | Structural stop | Mid | Far | Recorded first passage |
+|---|---|---:|---:|---:|---:|---:|---|
+| EGLDUSDT | Upthrust | 2026-09-20 18:28:13.714 | 3.688 | 3.699 | 3.680 | 3.666 | Mid first |
+| EGLDUSDT | Upthrust | 2026-09-20 18:46:51.407 | 3.688 | 3.701 | 3.680 | 3.666 | Mid first |
+| EGLDUSDT | Spring | 2026-09-20 18:58:09.377 | 3.671 | 3.658 | 3.680 | 3.694 | Mid first |
 
-| Area / file | Confirmed problem | Implemented behavior |
-|---|---|---|
-| `radar/market.py`, `radar/engine.py` | Only positions were pinned; an active compression could disappear from coarse candidates or live selection | Pending/open positions and unexpired tradable episodes are pinned. New eligible ranges are reconsidered by the monitoring loop, not just the five-minute ranking refresh. Expired ranges lose their pin. |
-| `radar/market.py` | A universe change canceled all streams and reset every selected symbol's flow | Per-symbol subscription tasks retain existing sockets. Only added/removed symbols change connections. Real reconnects still emit GAP events. |
-| `radar/engine.py` | Every recovery lookup scanned the growing event table | Indexed `(applied, seq)` lookup. Local 104,700-row benchmark: median 17.20 ms before, 0.00237 ms after, 30 repetitions. This is a query benchmark only. |
-| `radar/engine.py`, `radar/market.py` | Per-event durability and thread scheduling can amplify backlog | Worker drains up to 32 already-queued events without waiting to fill a batch. Inputs are committed durably, then bounded reducer groups commit atomically. A group failure rolls back all group state/offset effects; recovery cannot skip failed work. |
-| `radar/model.py`, `radar/market.py`, `radar/engine.py` | A quote could age in the local queue while its original receipt time was still used as decision time | `processed_ms` is recorded separately; decision time is at least receipt time. Quote source/receipt timestamps stay intact. Queue-delayed entries are canceled or blocked, and exits await valid liquidity. |
-| `radar/market.py` | Repeated stale socket messages could continue to drain obsolete history | Repeated over-age observations trigger reconnect and an explicit gap/warmup cycle. Old messages are still journaled; no false fresh timestamps are assigned. |
-| `radar/market.py` | Broad REST refresh serialized bar/funding work; a three-bar backfill could miss longer gaps | Independent supervised refresh, bar, funding, clock, timer and reducer tasks. Selected-symbol bar polling catches up based on last closed bar, up to the venue request bound. Any remaining bar gap blocks fresh compression. |
-| `radar/market.py` | Clock offset was sampled only at startup; queue/service health was not preserved | Periodic offset/uncertainty measurement, explicit gaps on material offset changes, per-symbol stream times, queue depth/delay, and periodic durable HEALTH records. |
-| `radar/strategy.py` | Comparing a 30-minute range against a 90-minute envelope can label ordinary trend movement as contraction | Compare recent range width with the median of prior equal-duration range widths, while retaining rotation and drift checks. Store source interval, baseline width, and contraction ratio with the range. |
-| `radar/strategy.py` | Old backfill could create a nominally new current episode | New episodes require a recently closed source candle. Old bars still build history but cannot alone activate a current setup. |
-| `radar/strategy.py` | Expiry was skipped on early-return observation types; stale bar context could support entries | Expiry is evaluated before early returns. Stale bar context blocks candidate confirmation. Expired unselected states can be cleaned by timers. |
-| `radar/strategy.py`, `radar/engine.py` | Quote/timer processing erased the useful blocker, producing almost exclusively `NO_ELIGIBLE_SETUP` | Preserve meaningful reasons and journal state/reason transitions, with episode and attempt evidence. Timer records retain the blocker. |
-| `radar/__main__.py` | Stale quotes or a last candle close were presented as current prices; expired ranges remained active | Use the same quote validity check as execution. Show unavailable live prices, retain the historical close separately, exclude expired ranges and consumed attempts from approach alerts. |
-| `radar/__main__.py` | Dashboard used a shared connection without one enclosing snapshot lock | Enrichment runs under the reducer connection lock so related portfolio/state reads are consistent. |
-| `radar/__main__.py`, `radar/dashboard.html` | Current-position price repeated entry; unrealized PnL showed booked net | Display fresh executable-side marks. Compute unrealized mark PnL from remaining quantity and entry. Mark PnL excludes hypothetical exit costs; stale marks are unavailable. |
-| `radar/dashboard.html` | Slow/erroring fetches could launch again every 100 ms; stale gauge appeared at midpoint | One in-flight fetch, timeout, retry pacing, visible paused/stale status, and no gauge marker without a live price. A real 0% range position is preserved. |
-| `radar/dashboard.html` | Hard-coded account caps and a false equity fallback could mislead | Read caps from config; preserve zero equity; display fresh-quote coverage and queue delay. |
-| `pyproject.toml` | Installed distributions could omit the added dashboard file | Include `dashboard.html` as package data; installed-package presence verified. |
-| `radar/config.py` | Boolean/string values could pass numeric configuration validation | Reject inappropriate field types explicitly. |
+These trigger/structure values come from recorded trades and the causal strategy state. They are **not claimed fills** because historical book/quote observations are missing.
 
-### What the range and hot-coin labels mean
+The original ALGO upside attempt that motivated the forensic check still does not become a valid Upthrust merely because timing is normalized: it did not provide the required failed-auction reclaim/response. This is an important negative control—the fix is not “let more things trade.”
 
-Range edges remain the **minimum low and maximum high of the recent closed-bar window**, with alternating visits and limited drift. They are observable boundaries, not a claim that every edge is institutional support/resistance. The equal-duration baseline removes one bias; it does not prove accumulation or predict a large move.
+## 6.1.3 persistent-heat discovery upgrade
 
-Discovery remains a bounded, turnover-filtered candidate pool ranked initially by absolute 24-hour percentage movement, then by relative volume surprise and the magnitude of OI-growth surprise. It considers both expansion and contraction. **This is not an exhaustive search of every newly heating altcoin.** A coin outside the coarse pool can be missed. Ranking parameters remain experimental; no fitted win-rate or optimal hold time is claimed. Pins preserve monitoring after discovery rather than requiring a coin to remain at the top of a transient ranking.
+The Spring/Upthrust decision contract is unchanged from the final 6.1.2 logic; 6.1.3 changes how broadly and intelligently the system decides **what to keep watching**.
 
-OI changes measure outstanding contracts; they do not independently identify directional buying, new money inflow, or a forthcoming move. In this implementation they support selection, while a failed-auction setup needs observed price behavior and aggression confirmation. There is no validated hidden-order/iceberg inference, full footprint engine, or automatic discretionary human judgment.
+The old discovery layer deeply evaluated only 40 contracts and treated the latest standardized volume/OI surprise too independently. A single 5-minute OI/volume burst could therefore look hot even if the entire impulse disappeared immediately afterward. The new discovery pipeline uses:
 
-The strategy is stateful and normalized to market observations, but necessarily uses explicit parameters and rules. It should not be described as a rule-free experienced trader. No parameter was optimized to make this short run produce trades.
+- a diversified **quick scan of up to 280** eligible liquid USDT perpetuals;
+- a **deep scan of up to 160** contracts with compression history and 5-minute OI history;
+- up to **24 live-streamed qualified symbols**, plus structural/position pins;
+- 5m and 10m volume context;
+- signed 5m and 15m OI context;
+- OI impulse direction, retained fraction and reversal fraction;
+- explicit heat lifecycle states: `NEW_IMPULSE`, `SUSTAINED_HOT`, `HOT_RETAINED`, `COOLING`, `FLUSH_EVENT`, `NORMAL`, and `DEAD_BURST`.
 
-## Verification and limits
+A one-window impulse that almost fully reverses while current volume returns to normal becomes `DEAD_BURST` and receives no live-stream slot. A partial OI pullback that leaves most of the participation intact can remain `HOT_RETAINED`. A large negative OI move with exceptional current volume and net deleveraging becomes `FLUSH_EVENT`, because forced liquidation can still matter for a failed auction.
 
-- Original supplied suite: **67 passed** before repairs.
-- Updated suite: **89 passed**. The 22 added cases cover pins, socket retention, full feed lifecycle with a controlled client, expiry, same-duration compression, backfill, stale dashboard values, side-specific marks, queue-time freshness, wrong config types, index usage, durable telemetry, batch rollback, and batch/single reduction equivalence.
-- Existing tests include mirrored long/short flows, restart/unclean-process recovery, duplicate input/fill effects, concurrent connections, gap/warmup behavior, fees/funding, partial exits, stale/thin/crossed books, and seeded random paths. These are software cases, not a distribution of future market outcomes.
-- Full repaired-code replay processed **104,700 recorded events**, leaving **zero pending**, with **zero positions/outcomes**. This is a changed-code replay of the supplied observations; it cannot simulate the additional streams that pinning would have collected or remove original data delays. Reasons now expose delayed trades, no compression, gap warmup, and stale bars instead of concealing them in a generic message.
-- JavaScript syntax and installed dashboard asset checked. Dashboard HTTP/JSON behavior tested. No claim of manual visual testing on your Windows machine.
-- Direct public Binance connectivity was attempted here and failed at DNS resolution. No network restrictions were bypassed. **Live exchange connectivity and a prolonged real-feed soak remain unverified in this environment.**
-- Test success does not measure unseen-market win rate, expectancy, or drawdown. This run has no trades from which to estimate them.
+Passive balances may relinquish their structural pin after confirmed `DEAD_BURST`; once a causal Spring/Upthrust attempt exists, discovery cooling cannot evict it. This keeps resource allocation adaptive without letting ranking changes interrupt a live setup.
 
-## How to run this update
+A dedicated 60-contract fake-exchange integration test deep-scans 50 symbols end-to-end (above the old 40 cap), ranks the heat states and selects the qualified live-stream set. Unit paths separately prove burst→dead, retained cooling, sustained heat and deleveraging flush behavior.
 
-1. Keep the old project and its `data-paper` directory as the original evidence.
-2. Extract the new ZIP to a **new folder**, not over the running application.
-3. Install Python 3.11+ if needed, then run `run-paper.bat`.
-4. The launcher creates/uses **`data-paper-v61`** and starts a fresh frozen experiment. No existing account positions need migration: this supplied run had none.
-5. Open http://127.0.0.1:8780/. Check fresh quote coverage and worker lag, not merely whether the page refreshes. A stale/unavailable display is an operational problem, not an entry signal.
-6. If startup fails, run `.venv\Scripts\python -m radar doctor` and retain the error. Stop normally with Ctrl+C before archiving your next run.
-7. Run `test-project.bat` to repeat the software tests locally. Run the synthetic `demo` only as a functional check; its outcome is not market evidence.
+The normalized 6.1 historical strategy-path replay remains **29 unique Spring/Upthrust candidates**, preserving the same setup behavior. That is expected: discovery coverage changed; the mature setup contract did not.
 
-Do not copy the old DB into the new data directory or alter its frozen hash to force it open. Source changes intentionally start a new experiment. The new ZIP omits the old virtual environment, caches, build output, old test artifacts, and recorded DB from the runtime folder. It contains current source, dashboard, tests, launchers, and this audit. Your original uploaded archive remains the raw evidence source.
+## Runtime repairs
 
-## What still needs observation before stronger claims
+### Throughput and freshness
 
-The next run must first demonstrate continuously usable per-symbol quotes/depth/trades, current bars and OI, and bounded queue delay. Check that every pinned active range receives its streams and that valid constructed setups still pass the pipeline without real data staleness. If your laptop cannot sustain the pinned universe, reduce the candidate/universe workload in a **new experiment**; do not loosen freshness guards.
+- worker queue increased and kept bounded;
+- event ingestion and reducer work execute in bounded batches;
+- per-symbol state is reused within reducer transactions instead of decoded/encoded per tick;
+- targeted flush barriers replace global drain behavior during an always-arriving live stream;
+- queue depth/delay/overload telemetry is retained;
+- repeated stale data still causes reconnect/gap handling rather than timestamp laundering.
 
-Collect both candidate and rejected setup evidence. Assess realized paper fills including costs, missed opportunities with complete coverage, parameter sensitivity, and held-out market periods. Compare failure rates across direction, liquidity, volatility, and sessions. Freeze the evaluated variant before judging new data. A longer test should include disconnect/restart and disk-limit behavior. These are remaining evidence requirements, not a promise that sufficient paper testing guarantees future profits.
+Final benchmark against the real 6.1 event shape: **20,000 events in 4.60 s ≈ 4,350 events/s**, versus the old run's worst observed received burst of 836 events/s. This is measured software headroom in the build environment, not a claim that every machine/market will have the same margin.
 
-A broad strong move after a range is not necessarily a spring or upthrust entry. Continuation entries are still outside this release. Full-volume-profile/absorption analytics, multi-exchange corroboration, and real-money execution are also outside the supported scope. This repair does not silently add untested variants to increase activity.
+### Feed lifecycle
 
-**Release conclusion: repaired and regression-tested paper runtime; not certified profitable, universally accurate, or ready for unattended real-money execution.**
+- one persistent **public** socket for `bookTicker` and `depth20@100ms`;
+- one persistent **market** socket for `aggTrade`;
+- live `SUBSCRIBE` / `UNSUBSCRIBE` deltas when the monitored universe changes;
+- active balances, attempts and paper exposure remain pinned through normal ranking churn;
+- ordinary book reconnect removes liquidity certainty without erasing continuous trade-auction evidence;
+- trade-stream gaps invalidate effort/response evidence and require warmup;
+- OI polling is independent for active monitored symbols.
 
-## Evidence files
+### Storage
 
-- `audit/recorded-run-summary.json`: source hashes, recovered-database integrity and latency statistics.
-- `audit/episode-coverage.csv`: every original reconstructed episode, boundaries and available observations.
-- `audit/original-trace.json`: original observer reconstruction and universe changes.
-- `audit/baseline_strategy.py`, `audit/trace_run.py`: the original observer and its reconstruction script.
-- `audit/repaired-recorded-replay.json`, `audit/replay_recorded.py`: repaired-code replay results and runner.
-- `audit/query-benchmark.json`: before/after pending-event lookup measurements and query plans.
-- `audit/tests.txt`, `audit/source-sha256.json`: final tests and source inventory.
+New event payloads are losslessly zlib-compressed while retaining the normalized event and original raw venue message. The decoder remains compatible with old plain JSON events. WAL/checkpoint behavior and configured disk limits bound transient growth. A representative depth20 codec sample previously measured ~68% payload-byte reduction; actual full-database reduction varies with event mix and SQLite overhead.
 
-Archive SHA-256: `5f5a1b1d016312fa877155d6f70b82531b1105c9d5dc2ad829c4704994cc54fb`.
-Recovered SQLite snapshot SHA-256: `4dd1dfd66109851fbff9a04ae79320e62e9c3363396a1d598b668d54f53f0e9d`.
+## Spring / Upthrust decision contract
+
+Only Spring long and Upthrust short are tradable.
+
+The mirrored sequence is:
+
+1. frozen causal balance;
+2. **genuine sweep** (at least 5% of balance width or the instrument noise floor);
+3. outside effort/result observation;
+4. directional reclaim;
+5. effective response;
+6. direct response entry or patient defended retest;
+7. fresh executable quote/depth and economic authorization.
+
+Effort/result routes distinguish high-effort poor-result, low-effort exhaustion and mixed evidence. Flow is supporting evidence rather than an absolute fixed-percentage veto. A price-led confirmation must be **strictly stronger** in price progress than the aligned-flow route; a prior mixed-effort logic inversion that could make the “strong” path easier has been removed.
+
+If evidence is valid but the direct quote destroys cost-adjusted R:R, the engine does not loosen the R:R and does not chase. The attempt changes to `RETEST_ONLY`; a later defended revisit plus renewed response can authorize a new proposal. Persistent outside acceptance or new structural extension invalidates the failed-auction hypothesis.
+
+## Execution and management verified
+
+Paper proposals use current metadata, executable side, depth capacity, adverse slippage, fee/funding allowance, structural stop and target provenance. Risk is recomputed before the subsequent quote fill. Bad geometry cancels.
+
+The manager supports:
+
+- entry;
+- structural stop;
+- TP1 partial;
+- cost-adjusted breakeven protection after TP1;
+- TP2/final exit;
+- time/semantic invalidation exits;
+- funding/fee accounting;
+- stale/thin liquidity waits instead of fictional fills;
+- restart/idempotency tests.
+
+The final deliberately favorable **synthetic** full-engine demo processed 236 events and actually executed the engine ledger from setup through `TP2_HIT`: initial modeled risk **29.9768**, fees **1.9979**, net **128.5364**, net R **4.2879**. This is proof of software execution mechanics only; it is not market-performance evidence.
+
+## Release verification
+
+- `python -m compileall -q radar tests`: **pass**.
+- `pytest -q`: **113 passed**.
+- long and short Spring/Upthrust full trade lifecycle: pass.
+- TP1 → cost-adjusted breakeven protection: pass in both directions.
+- TP1 → TP2 close: pass in both directions.
+- persistent WebSocket subscription delta: pass.
+- current `/public` + `/market` stream-lane assertion: pass.
+- lossless raw venue-message journal round-trip: pass.
+- clean package install/import: version **6.1.3**, dashboard resource present.
+- throughput benchmark: ~**4,350 events/s** on the recorded event shape.
+
+Exact machine outputs are saved under `audit/`.
+
+## What was not possible to verify here
+
+The build container cannot resolve `fapi.binance.com`; `radar doctor` therefore fails here at DNS resolution. No network restriction was bypassed. The Windows launcher runs `doctor` first so your own machine must prove current public REST/WebSocket access before paper mode starts.
+
+The tests and synthetic execution do not prove future profitability. The historical 6.1 archive cannot supply exact executable historical fills because quote/depth history is missing. A clean prospective 6.1.3 live-data paper run is therefore the appropriate economic evaluation.
+
+## Deployment
+
+1. Extract to a new folder.
+2. Run `run-paper.bat`.
+3. Let `doctor` pass.
+4. Run only with fresh `data-paper-v613`.
+5. Monitor dashboard queue delay/data freshness as well as setup decisions.
+6. Stop with Ctrl+C before copying/archive.
+
+Do not copy the 6.1 database into 6.1.3. Do not disable freshness guards to manufacture trades. No real-money order endpoint exists in this package.

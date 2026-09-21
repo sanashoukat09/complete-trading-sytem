@@ -4,7 +4,7 @@ from dataclasses import replace
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from .config import Config
 from .engine import Engine
-from .model import Event,dumps,digest
+from .model import Event,event_from_payload,dumps,digest
 from .market import Feed
 from .strategy import features
 from .research import evaluate
@@ -212,9 +212,10 @@ def main(argv=None):
                 try:
                     await client.open();print('REST server time: OK; adjusted clock offset (ms):',client.offset)
                     info=await client.get('/fapi/v1/exchangeInfo');print('Metadata symbols:',len(info['symbols']))
-                    for group,suffix in [('public','bookTicker'),('public','depth20@100ms'),('market','aggTrade')]:
-                        async with client.session.ws_connect(f'wss://fstream.binance.com/{group}/stream?streams=btcusdt@{suffix}',receive_timeout=10) as ws:
-                            raw=await asyncio.wait_for(ws.receive_json(),10);print(group,suffix,raw.get('data',raw).get('e'),'OK')
+                    for suffix in ('bookTicker','depth20@100ms','aggTrade'):
+                        lane='public' if suffix in ('bookTicker','depth20@100ms') else 'market'
+                        async with client.session.ws_connect(f'wss://fstream.binance.com/{lane}/stream?streams=btcusdt@{suffix}',receive_timeout=10) as ws:
+                            raw=await asyncio.wait_for(ws.receive_json(),10);print(lane,suffix,raw.get('data',raw).get('e'),'OK')
                     print('Read-only connectivity passed. This does not verify profitability or an extended soak.')
                 finally:await client.close()
             asyncio.run(diagnose());return 0
@@ -261,7 +262,7 @@ def main(argv=None):
                     original=source.execute("SELECT value FROM manifest WHERE key='code_hash'").fetchone()[0]
                     current=e.db.execute("SELECT value FROM manifest WHERE key='code_hash'").fetchone()[0]
                     if original!=current:raise ValueError('Replay requires the same code revision')
-                    for r in source.execute('SELECT payload FROM events ORDER BY seq'):e.ingest(Event(**json.loads(r[0])))
+                    for r in source.execute('SELECT payload FROM events ORDER BY seq'):e.ingest(event_from_payload(r[0]))
                     print(json.dumps(e.status(),indent=2));print('Replay completed offline.')
                 finally:e.close()
             finally:source.close()

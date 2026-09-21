@@ -30,7 +30,7 @@ def setup(engine,direction=1,symbol=SYM):
  now=bootstrap(engine,symbol);tid=1
  # Prior trade reference near lower edge for spring / upper edge for upthrust.
  anchor=100.3 if direction==1 else 109.7
- prices=[anchor]*22+([99.5,100.2] if direction==1 else [110.5,109.8])+([100.35+i*.025 for i in range(6)] if direction==1 else [109.65-i*.025 for i in range(6)])
+ prices=[anchor]*22+([99.5,100.2] if direction==1 else [110.5,109.8])+([100.35+i*.06 for i in range(6)] if direction==1 else [109.65-i*.06 for i in range(6)])
  for p in prices:
   now+=600;quote(engine,now,p,symbol)
   engine.ingest(normalize(dict(e='aggTrade',s=symbol,E=now,T=now,a=tid,p=str(p),q='10',m=direction==-1),now));tid+=1

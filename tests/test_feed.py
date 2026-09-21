@@ -28,7 +28,7 @@ def test_feed_composition_from_raw_rest(tmp_path):
    await f.refresh();await f.queue.join()
    assert f.selected==[SYM];assert e.state(SYM)['episode']
    now=BASE+4000
-   prices=[100.3]*22+[99.5,100.2]+[100.35+i*.025 for i in range(6)]
+   prices=[100.3]*22+[99.5,100.2]+[100.35+i*.06 for i in range(6)]
    for i,p in enumerate(prices):
     now+=600
     for raw in [dict(e='depthUpdate',s=SYM,E=now,u=now,b=[[str(p-.01),'10000']],a=[[str(p+.01),'10000']]),dict(e='bookTicker',s=SYM,E=now,u=now,b=str(p-.01),a=str(p+.01),B='10000',A='10000'),dict(e='aggTrade',s=SYM,E=now,T=now,a=i+1,p=str(p),q='10',m=False)]:

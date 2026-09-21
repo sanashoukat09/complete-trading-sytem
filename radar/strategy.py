@@ -4,7 +4,7 @@ from .model import digest,positive
 
 def initial():
     return dict(bars=[],oi=[],trades=[],episode=None,attempt=None,quote=None,depth=None,meta=None,
-                last_trade_id=None,last_trade_ms=0,warm_trades=0,reason='WARMUP',rank=None)
+                last_trade_id=None,last_trade_ms=0,warm_trades=0,reason='WARMUP',rank=None,attention=None)
 
 def zscore(x,history):
     if len(history)<10:return None
@@ -12,14 +12,108 @@ def zscore(x,history):
     if mad<=1e-12:return 0.0 if abs(x-m)<1e-12 else math.copysign(5.,x-m)
     return max(-10.,min(10.,(x-m)/(1.4826*mad)))
 
-def features(s):
-    bars=s['bars']; oi=s['oi'];vol=None;growth=None;gz=None
+def _block_sums(values,width):
+    if width<=0:return []
+    usable=len(values)//width*width
+    values=values[-usable:] if usable else []
+    return [sum(values[i:i+width]) for i in range(0,len(values),width)]
+
+def _series_z(values,index=-1):
+    if len(values)<11:return None
+    i=index if index>=0 else len(values)+index
+    if i<10 or i>=len(values):return None
+    return zscore(values[i],values[max(0,i-30):i])
+
+def features(s,c=None):
+    """Point-in-time participation features with explicit heat persistence.
+
+    Discovery is intentionally different from trade confirmation. A one-window burst
+    can earn observation, but it does not remain HOT if the participation immediately
+    unwinds. Negative OI is kept signed: a high-volume deleveraging flush can remain
+    interesting without being mislabeled sustained accumulation.
+    """
+    bars=s['bars'];oi=s['oi'];vol=None;growth=None;gz=None
     if len(bars)>=31:
         vol=zscore(bars[-1]['volume'],[x['volume'] for x in bars[-31:-1]])
     if len(oi)>=11:
         gs=[math.log(b['value']/a['value']) for a,b in zip(oi,oi[1:]) if b['at']-a['at']==300000]
         if len(gs)>=10:growth=gs[-1];gz=zscore(gs[-1],gs[:-1])
-    return dict(volume_z=vol,oi_growth=growth,oi_growth_z=gz)
+
+    width=getattr(c,'heat_volume_window_bars',5)
+    event_z=getattr(c,'heat_event_z',2.0)
+    retained_min=getattr(c,'heat_retention_min',.45)
+    dead_max=getattr(c,'heat_dead_retention_max',.20)
+    volume_alive=getattr(c,'heat_volume_alive_z',.50)
+
+    block5=_block_sums([x['volume'] for x in bars],width)
+    volume_5m=sum(x['volume'] for x in bars[-width:]) if len(bars)>=width else None
+    volume_5m_z=_series_z(block5,-1)
+    prior_volume_5m_z=_series_z(block5,-2)
+    block10=_block_sums([x['volume'] for x in bars],width*2)
+    volume_10m_z=_series_z(block10,-1)
+
+    oi_growth_15m=None;oi_growth_15m_z=None;oi_retention=None;oi_reversal_fraction=None
+    oi_impulse_direction=0;prior_oi_growth_z=None
+    contiguous=[]
+    if oi:
+        contiguous=[oi[-1]]
+        for x in reversed(oi[:-1]):
+            if contiguous[0]['at']-x['at']!=300000:break
+            contiguous.insert(0,x)
+    if len(contiguous)>=2:
+        all_g=[math.log(b['value']/a['value']) for a,b in zip(contiguous,contiguous[1:])]
+        if len(all_g)>=2:
+            prior_oi_growth_z=_series_z(all_g,-2)
+        if len(contiguous)>=4:
+            base=contiguous[-4]['value'];current=contiguous[-1]['value']
+            if positive(base) and positive(current):
+                oi_growth_15m=math.log(current/base)
+                hist15=[]
+                if len(contiguous)>=14:
+                    for i in range(3,len(contiguous)):
+                        if contiguous[i]['at']-contiguous[i-3]['at']==900000:
+                            hist15.append(math.log(contiguous[i]['value']/contiguous[i-3]['value']))
+                    if len(hist15)>=11:oi_growth_15m_z=zscore(hist15[-1],hist15[:-1])
+                path=[math.log(x['value']/base) for x in contiguous[-3:]]
+                peak=max(path,key=lambda x:abs(x)) if path else 0.
+                if abs(peak)>1e-12:
+                    oi_impulse_direction=1 if peak>0 else -1
+                    retained=oi_impulse_direction*oi_growth_15m/abs(peak)
+                    oi_retention=max(0.,min(1.,retained))
+                    oi_reversal_fraction=max(0.,min(2.,1-retained))
+
+    current_event=(volume_5m_z is not None and volume_5m_z>=event_z) or (gz is not None and abs(gz)>=event_z)
+    prior_event=(prior_volume_5m_z is not None and prior_volume_5m_z>=event_z) or (prior_oi_growth_z is not None and abs(prior_oi_growth_z)>=event_z)
+    current_volume_alive=volume_5m_z is not None and volume_5m_z>=volume_alive
+    volume_alive_now=current_volume_alive or (volume_10m_z is not None and volume_10m_z>=volume_alive)
+    high_volume_now=volume_5m_z is not None and volume_5m_z>=event_z
+    oi_flush=(gz is not None and gz<=-event_z and high_volume_now and
+              (oi_growth_15m is None or oi_growth_15m<0 or (oi_retention is not None and oi_retention<=dead_max)))
+    current_reversing=bool(growth is not None and oi_impulse_direction and growth*oi_impulse_direction<0)
+
+    if oi_flush:
+        heat_state='FLUSH_EVENT'
+    elif prior_event and current_reversing and oi_retention is not None and oi_retention<=dead_max and not current_volume_alive:
+        # A statistically large reversal is not a new source of heat when it merely
+        # removes the preceding impulse and participation volume has disappeared.
+        heat_state='DEAD_BURST'
+    elif current_event and not current_reversing and ((oi_retention is not None and oi_retention>=retained_min) or (volume_10m_z is not None and volume_10m_z>=volume_alive)):
+        heat_state='SUSTAINED_HOT'
+    elif oi_retention is not None and oi_retention>=retained_min and volume_alive_now:
+        heat_state='HOT_RETAINED'
+    elif current_event:
+        heat_state='NEW_IMPULSE'
+    elif prior_event and ((oi_retention is not None and oi_retention>dead_max) or volume_alive_now):
+        heat_state='COOLING'
+    else:
+        heat_state='NORMAL'
+
+    return dict(volume_z=vol,oi_growth=growth,oi_growth_z=gz,
+                volume_5m=volume_5m,volume_5m_z=volume_5m_z,prior_volume_5m_z=prior_volume_5m_z,
+                volume_10m_z=volume_10m_z,oi_growth_15m=oi_growth_15m,oi_growth_15m_z=oi_growth_15m_z,
+                prior_oi_growth_z=prior_oi_growth_z,oi_retention=oi_retention,
+                oi_reversal_fraction=oi_reversal_fraction,oi_impulse_direction=oi_impulse_direction,
+                heat_state=heat_state)
 
 def compression(s,now,c):
     bars=s['bars'];n=c.compression_bars;b=c.baseline_bars
@@ -43,8 +137,65 @@ def compression(s,now,c):
                 baseline_width=pw,contraction=w/pw,
                 id='EP_'+digest([recent[0]['open_ms'],lo,hi])[:24],version=1,rotations=len(visits))
 
+def _signed_progress(direction, price, reference):
+    return direction*(price-reference)
+
+def _trade_is_favorable(trade,direction):
+    return trade['buy']==(direction==1)
+
+def _flow_stats(trades,direction):
+    total=sum(t['qty'] for t in trades)
+    if total<=0:return dict(total=0.,favorable=0.,adverse=0.,favorable_share=.5,adverse_share=.5)
+    favorable=sum(t['qty'] for t in trades if _trade_is_favorable(t,direction))
+    return dict(total=total,favorable=favorable,adverse=total-favorable,
+                favorable_share=favorable/total,adverse_share=(total-favorable)/total)
+
+def _attempt_quality(a,ep,direction):
+    """Describe effort/result without pretending it reveals hidden intent."""
+    outside=a.get('outside',[]);flow=_flow_stats(outside,direction)
+    if outside:
+        span=max(1000,outside[-1]['at']-outside[0]['at'])
+        outside_rate=flow['total']*1000/span
+    else:outside_rate=0.
+    baseline_rate=a.get('baseline_rate')
+    effort_ratio=outside_rate/baseline_rate if baseline_rate and baseline_rate>0 else None
+    boundary=ep['lower'] if direction==1 else ep['upper']
+    excursion=abs(a['extreme']-boundary);excursion_fraction=excursion/ep['width'] if ep['width']>0 else None
+    route='UNRESOLVED_EFFORT'
+    if effort_ratio is not None:
+        if effort_ratio>=1.25 and flow['adverse_share']>=.55 and excursion_fraction<=.35:
+            route='HIGH_EFFORT_POOR_RESULT'
+        elif effort_ratio<=.75 and excursion_fraction<=.15:
+            route='LOW_EFFORT_EXHAUSTION'
+        else:route='MIXED_EFFORT_RESULT'
+    return dict(route=route,effort_ratio=effort_ratio,outside_rate=outside_rate,baseline_rate=baseline_rate,
+                excursion_fraction=excursion_fraction,outside_adverse_share=flow['adverse_share'])
+
+def _candidate(s,a,ep,p,noise,route,response,reference):
+    direction=a['direction'];flow=_flow_stats(response,direction)
+    stop=a['extreme']-direction*noise
+    far=ep['upper'] if direction==1 else ep['lower'];mid=(ep['upper']+ep['lower'])/2
+    outside=_flow_stats(a.get('outside',[]),direction)
+    excursion=direction*((ep['lower'] if direction==1 else ep['upper'])-a['extreme'])
+    return dict(id=a['id'],episode=ep['id'],episode_version=ep['version'],direction=direction,
+        trigger=p,stop=stop,mid=mid,far=far,evidence=a['evidence']+[x['id'] for x in response],
+        explanation=dict(kind='SPRING' if direction==1 else 'UPTHRUST',route=route,
+                         aggression=flow['favorable_share'],outside_adverse_share=outside['adverse_share'],
+                         effort_route=(a.get('quality') or {}).get('route'),
+                         effort_ratio=(a.get('quality') or {}).get('effort_ratio'),
+                         excursion_fraction=(a.get('quality') or {}).get('excursion_fraction'),
+                         excursion=a['extreme'],excursion_distance=excursion,
+                         response_reference=reference,rotations=ep['rotations'],
+                         best_response=a.get('best_progress',0.),retest_extreme=a.get('retest_extreme')))
+
 def observe(s,e,c):
-    """Mutates only supplied JSON state. Returns an evidence-bearing candidate or None."""
+    """Causal mirrored failed-auction observer for Spring/Upthrust.
+
+    The state machine deliberately separates: outside attempt, reclaim, price response,
+    defended retest, renewed progress, and competing outside acceptance. Flow supports
+    the decision but a fixed buy/sell percentage is never allowed to overrule clear
+    price-effort/result evidence by itself.
+    """
     d=e.data;now=e.decision_ms
     ep=s['episode'];a=s['attempt']
     if ep and now>=ep['expires']:
@@ -53,7 +204,17 @@ def observe(s,e,c):
         s['attempt']=None;s['reason']='ATTEMPT_EXPIRED'
     if e.kind=='TIMER':return
     if e.kind=='META':s['meta']=dict(d);return
+    if e.kind=='ATTENTION':s['attention']=dict(d);return
     if e.kind=='GAP':
+        group=d.get('group')
+        if group=='public':
+            # A book/quote reconnect removes executable-liquidity certainty but does
+            # not erase an otherwise continuous aggTrade auction hypothesis.
+            s.update(quote=None,depth=None,reason='BOOK_GAP_WAIT_LIQUIDITY');return
+        if group=='market':
+            # Missing aggTrades breaks effort/result and causal response evidence.
+            s.update(trades=[],attempt=None,last_trade_id=None,warm_trades=0,reason='TRADE_GAP_WARMUP');return
+        # Clock/unknown gaps can invalidate ordering across capabilities; reset all.
         s.update(quote=None,depth=None,trades=[],attempt=None,last_trade_id=None,warm_trades=0,reason='GAP_WARMUP');return
     if e.kind in ('QUOTE','DEPTH'):
         key='quote' if e.kind=='QUOTE' else 'depth'
@@ -72,7 +233,6 @@ def observe(s,e,c):
         if not (0<d['low']<=min(d['open'],d['close'])<=max(d['open'],d['close'])<=d['high']):raise ValueError('Invalid OHLC')
         s['bars']=(s['bars']+[dict(d)])[-(c.baseline_bars+c.compression_bars+60):]
         if ep and not a:
-            # Three closed bars accepting beyond old value terminate it; a single sweep does not.
             closes=[x['close'] for x in s['bars'][-3:]]
             if all(x>ep['upper'] for x in closes) or all(x<ep['lower'] for x in closes):s['episode']=None;ep=None
         if ep is None and 0<=now-d['close_ms']<=120000:s['episode']=compression(s,now,c)
@@ -86,7 +246,8 @@ def observe(s,e,c):
     if last is not None and tid!=last+1:
         s['trades']=[];s['attempt']=None;s['warm_trades']=0;a=None;s['reason']='TRADE_GAP'
     s['last_trade_id']=tid;s['last_trade_ms']=e.at;s['warm_trades']+=1
-    s['trades']=(s['trades']+[dict(price=p,qty=qty,buy=not d['buyer_maker'],at=e.at,id=e.identity())])[-300:]
+    trade=dict(price=p,qty=qty,buy=not d['buyer_maker'],at=e.at,id=e.identity())
+    s['trades']=(s['trades']+[trade])[-300:]
     if now-e.at>c.max_exchange_lag_ms:s['reason']='DELAYED_TRADE';return
     meta=s['meta']
     if not ep:s['reason']='NO_COMPRESSION';return
@@ -94,37 +255,109 @@ def observe(s,e,c):
     if s['warm_trades']<20:s['reason']='FLOW_WARMUP';return
     if not s['bars'] or now-s['bars'][-1]['close_ms']>120000:s['reason']='BARS_STALE';return
     noise=max(meta['tick_size']*c.min_net_move_ticks,ep['width']*.01)
+    boundary=ep['lower'] if (a or {}).get('direction',1)==1 else ep['upper']
     if a is None:
-        direction=1 if p<ep['lower']-noise else -1 if p>ep['upper']+noise else 0
+        # A failed auction needs a genuine excursion, not a one-tick print just beyond
+        # the edge. Five percent of the frozen balance width is still a small probe,
+        # but it filters boundary micro-noise while remaining normalized by symbol.
+        sweep_need=max(noise,ep['width']*.05)
+        direction=1 if p<=ep['lower']-sweep_need else -1 if p>=ep['upper']+sweep_need else 0
         s['reason']='OUTSIDE_ATTEMPT' if direction else 'WAIT_BOUNDARY_SWEEP'
         if direction:
             anchor=statistics.median(x['price'] for x in s['trades'][-11:-1])
+            pre=s['trades'][-41:-1]
+            if len(pre)>=2:
+                span=max(1000,pre[-1]['at']-pre[0]['at']);baseline_rate=sum(x['qty'] for x in pre)*1000/span
+            else:baseline_rate=None
             s['attempt']=dict(id='AT_'+digest([ep['id'],e.identity()])[:24],direction=direction,
-                started=now,extreme=p,stage='OUTSIDE',anchor=anchor,evidence=[e.identity()],response=[])
+                started=now,extreme=p,stage='OUTSIDE',anchor=anchor,evidence=[e.identity()],outside=[trade],
+                response=[],best_progress=0.,lost_since=None,lost_count=0,retest_extreme=None,baseline_rate=baseline_rate,quality=None)
         return
     direction=a['direction'];boundary=ep['lower'] if direction==1 else ep['upper']
+    # A move a full balance-width beyond the frozen boundary is no longer a failed auction.
     if (direction==1 and p<ep['lower']-ep['width']) or (direction==-1 and p>ep['upper']+ep['width']):
         s['attempt']=None;s['reason']='EXCESSIVE_EXCURSION';return
     if a['stage']=='OUTSIDE':
-        a['extreme']=min(a['extreme'],p) if direction==1 else max(a['extreme'],p)
+        old=a['extreme'];a['extreme']=min(old,p) if direction==1 else max(old,p)
         s['reason']='WAIT_RECLAIM'
         if direction*(p-boundary)>=noise:
-            s['reason']='WAIT_RESPONSE'
-            a.update(stage='RECLAIMED',reclaimed=now,reclaim_price=p,response=[]);a['evidence'].append(e.identity())
+            a.update(stage='RECLAIMED',reclaimed=now,reclaim_price=p,response=[],best_progress=0.,
+                     lost_since=None,lost_count=0,retest_extreme=None,retest_started=None)
+            a['quality']=_attempt_quality(a,ep,direction)
+            a['evidence'].append(e.identity());s['reason']='WAIT_RESPONSE'
+        else:a['outside']=(a.get('outside',[])+[trade])[-120:]
         return
-    if direction*(p-a['extreme'])<=0:s['attempt']=None;s['reason']='STRUCTURAL_INVALIDATION';return
-    if direction*(p-boundary)<0:s['reason']='RECLAIM_LOST';s['attempt']=None;return
     if a['stage']=='CONSUMED':s['reason']='ATTEMPT_CONSUMED';return
-    a['response']=(a['response']+[s['trades'][-1]])[-100:]
-    response=a['response'];total=sum(t['qty'] for t in response)
-    fav=sum(t['qty'] for t in response if t['buy']==(direction==1))
-    if len(response)<c.min_response_trades or now-a['reclaimed']<c.min_response_ms:s['reason']='WAIT_RESPONSE';return
+    # The sweep extreme is a structural reference, not a one-tick hard stop while observing.
+    # Only meaningful new adverse progress beyond it invalidates immediately.
+    hard_fail=a['extreme']-direction*noise
+    if direction*(p-hard_fail)<0:
+        s['attempt']=None;s['reason']='STRUCTURAL_INVALIDATION';return
+    inside_progress=direction*(p-boundary)
+    if inside_progress < -noise:
+        if a.get('lost_since') is None:a['lost_since']=now;a['lost_count']=1
+        else:a['lost_count']+=1
+        # Persistent return outside after reclaim is acceptance, not a patient retest.
+        if a['lost_count']>=c.min_response_trades and now-a['lost_since']>=c.min_response_ms:
+            s['attempt']=None;s['reason']='OUTSIDE_ACCEPTANCE_AFTER_RECLAIM';return
+        s['reason']='RECLAIM_UNDER_PRESSURE';return
+    a['lost_since']=None;a['lost_count']=0
+    a['response']=(a.get('response',[])+[trade])[-160:]
+    response=a['response'];flow=_flow_stats(response,direction)
     reference=max(a['anchor'],a['reclaim_price']) if direction==1 else min(a['anchor'],a['reclaim_price'])
-    if direction*(p-reference)<noise:s['reason']='NO_PRICE_RESPONSE';return
-    if fav/total<c.aggression_fraction:s['reason']='FLOW_CONTRADICTION';return
-    stop=a['extreme']-direction*noise
-    far=ep['upper'] if direction==1 else ep['lower'];mid=(ep['upper']+ep['lower'])/2
-    return dict(id=a['id'],episode=ep['id'],episode_version=ep['version'],direction=direction,
-        trigger=p,stop=stop,mid=mid,far=far,evidence=a['evidence']+[x['id'] for x in response],
-        explanation=dict(kind='SPRING' if direction==1 else 'UPTHRUST',aggression=fav/total,
-                         excursion=a['extreme'],response_reference=reference,rotations=ep['rotations']))
+    progress=_signed_progress(direction,p,reference)
+    a['best_progress']=max(a.get('best_progress',0.),progress)
+    quality=(a.get('quality') or {}).get('route','UNRESOLVED_EFFORT')
+    # Clear high-effort failure or low-effort exhaustion earns a slightly earlier
+    # response threshold. Mixed/unknown attempts must prove materially more progress.
+    response_fraction=.025 if quality in ('HIGH_EFFORT_POOR_RESULT','LOW_EFFORT_EXHAUSTION') else .05
+    small=max(noise,ep['width']*response_fraction)
+    # Price-led confirmation is deliberately stronger than the aligned-flow route.
+    # In the old mixed-effort branch, a fixed 4% threshold could paradoxically be
+    # lower than the 5% aligned threshold. Never let the 'strong' route be easier.
+    strong=max(noise*2,small*1.5,ep['width']*.04)
+
+    # Once execution economics say the direct response has become expensive, do not
+    # keep chasing the same confirmation. Preserve the valid auction hypothesis and
+    # wait for a defended revisit that improves price without accepting outside.
+    if a.get('entry_mode')=='RETEST_ONLY' and a['stage']!='RETEST':
+        retest_zone=max(noise,ep['width']*.05)
+        if a['best_progress']>=small and inside_progress<=retest_zone:
+            a['retest_started']=now;a['retest_extreme']=p;a['retest_response']=[];a['stage']='RETEST'
+            s['reason']='WAIT_RETEST_DEFENSE';return
+        s['reason']='WAIT_BETTER_ENTRY_RETEST';return
+
+    # A retest is a distinct entry route. Once it starts, renewed progress must be
+    # measured from the retest extreme rather than falling back into direct-response
+    # confirmation and accidentally chasing the old move.
+    if a['stage']=='RETEST':
+        a['retest_extreme']=min(a['retest_extreme'],p) if direction==1 else max(a['retest_extreme'],p)
+        a.setdefault('retest_response',[]).append(trade);a['retest_response']=a['retest_response'][-100:]
+        rext=a['retest_extreme'];renewed=_signed_progress(direction,p,rext)
+        rflow=_flow_stats(a['retest_response'],direction)
+        retest_need=max(noise,ep['width']*.03)
+        if len(a['retest_response'])>=c.min_response_trades and renewed>=retest_need and rflow['favorable_share']>=max(.45,c.aggression_fraction-.10):
+            s['reason']='ENTRY_RETEST_CONFIRMED'
+            return _candidate(s,a,ep,p,noise,'DEFENDED_RETEST',a['retest_response'],rext)
+        s['reason']='WAIT_RETEST_DEFENSE';return
+
+    if len(response)<c.min_response_trades or now-a['reclaimed']<c.min_response_ms:
+        s['reason']='WAIT_RESPONSE';return
+    # Two legitimate direct routes inside the SAME Spring/Upthrust family:
+    # 1) flow-aligned response; 2) price-led poor-result/absorption response.
+    aligned=progress>=small and flow['favorable_share']>=c.aggression_fraction
+    price_led=progress>=strong and flow['favorable_share']>=max(.40,c.aggression_fraction-.15)
+    if aligned or price_led:
+        route='DIRECT_FLOW_RESPONSE' if aligned else 'DIRECT_PRICE_LED_RESPONSE'
+        s['reason']='ENTRY_RESPONSE_CONFIRMED'
+        return _candidate(s,a,ep,p,noise,route,response,reference)
+    # Once there has been genuine response, a controlled revisit is information rather
+    # than automatic failure. Keep it inside the original Spring/Upthrust hypothesis.
+    retest_zone=max(noise,ep['width']*.05)
+    if a['best_progress']>=small and inside_progress<=retest_zone:
+        if a.get('retest_started') is None:
+            a['retest_started']=now;a['retest_extreme']=p;a['retest_response']=[]
+        else:
+            a['retest_extreme']=min(a['retest_extreme'],p) if direction==1 else max(a['retest_extreme'],p)
+        a['stage']='RETEST';s['reason']='WAIT_RETEST_DEFENSE';return
+    s['reason']='NO_EFFECTIVE_RESPONSE'

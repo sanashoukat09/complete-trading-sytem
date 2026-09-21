@@ -866,8 +866,8 @@
         </div>
         <div class="kpi-value" id="kpiApproachingVal">0 Watches</div>
         <div class="kpi-subtext">
-          <span>Candidate Pool: 40 coins</span>
-          <span>Subscribed: 12 coins</span>
+          <span id="kpiCandidatePool">Candidate Pool: -</span>
+          <span id="kpiSubscribed">Subscribed: -</span>
         </div>
       </div>
 
@@ -903,7 +903,7 @@
       </button>
       <button class="tab-btn" onclick="switchTab('hotcoins')">
         Market Radar / Hot Coins
-        <span class="tab-badge" id="tabBadgeHotCoins">40</span>
+        <span class="tab-badge" id="tabBadgeHotCoins">0</span>
       </button>
       <button class="tab-btn" onclick="switchTab('compressions')">
         Compression Matrix
@@ -1002,8 +1002,8 @@
           <div class="filter-group">
             <input type="text" class="search-input" id="searchHotCoins" placeholder="Filter symbol..." oninput="renderHotCoinsTable()">
             <select class="search-input" id="filterHotCoinsType" onchange="renderHotCoinsTable()" style="width: 140px;">
-              <option value="all">All Candidates (40)</option>
-              <option value="selected">Subscribed Only (12)</option>
+              <option value="all" id="hotAllOption">All Deep-Scanned Candidates</option>
+              <option value="selected" id="hotSelectedOption">Subscribed Only</option>
               <option value="compressed">Compressed Only</option>
               <option value="volume">High Vol Z (> 2)</option>
               <option value="oi">High OI Z (> 2)</option>
@@ -1017,7 +1017,8 @@
                 <th>Rank</th>
                 <th>Symbol</th>
                 <th>24h Turnover</th>
-                <th>Vol Z-Score</th>
+                <th>Heat State</th>
+                <th>5m Vol Z</th>
                 <th>5m OI Growth</th>
                 <th>OI Z-Score</th>
                 <th>Surprise Score</th>
@@ -1252,6 +1253,15 @@
       document.getElementById('tabBadgeCompressions').textContent = compressions.length;
       document.getElementById('tabBadgeApproaching').textContent = approaching.length;
       document.getElementById('tabBadgePositions').textContent = activePositions.length;
+      const universe = state.universe || {};
+      const ranking = universe.ranking || [];
+      const selected = universe.selected || [];
+      document.getElementById('tabBadgeHotCoins').textContent = ranking.length;
+      document.getElementById('kpiCandidatePool').textContent = 'Deep-scanned: ' + ranking.length + ' coins';
+      document.getElementById('kpiSubscribed').textContent = 'Live-streamed: ' + selected.length + ' coins';
+      const allOpt=document.getElementById('hotAllOption'), selOpt=document.getElementById('hotSelectedOption');
+      if(allOpt) allOpt.textContent='All Deep-Scanned ('+ranking.length+')';
+      if(selOpt) selOpt.textContent='Subscribed Only ('+selected.length+')';
 
       // Engine Throughput
       document.getElementById('kpiEventsProcessed').textContent = (state.processed_events || 0).toLocaleString();
@@ -1305,7 +1315,7 @@
         const st = states[item.symbol] || {};
         const tr = document.createElement('tr');
         const price = st.price ? ('$' + formatPrice(st.price)) : '<span class="dim">STALE / unavailable</span>';
-        const vz = item.features.volume_z != null ? item.features.volume_z.toFixed(2) : '-';
+        const vz = item.features.volume_5m_z != null ? item.features.volume_5m_z.toFixed(2) : (item.features.volume_z != null ? item.features.volume_z.toFixed(2) : '-');
         const oig = item.features.oi_growth != null ? (item.features.oi_growth * 100).toFixed(2) + '%' : '-';
         const compressedBadge = item.compressed 
           ? '<span class="pill pill-amber">COMPRESSED</span>' 
@@ -1398,14 +1408,14 @@
         if (search && !r.symbol.includes(search)) return false;
         if (filterType === 'selected') return selected.includes(r.symbol);
         if (filterType === 'compressed') return r.compressed;
-        if (filterType === 'volume') return (r.features.volume_z || 0) > 2;
+        if (filterType === 'volume') return (r.features.volume_5m_z ?? r.features.volume_z ?? 0) > 2;
         if (filterType === 'oi') return Math.abs(r.features.oi_growth_z || 0) > 2;
         return true;
       });
 
       filtered.forEach((r, idx) => {
         const tr = document.createElement('tr');
-        const vz = r.features.volume_z != null ? r.features.volume_z.toFixed(2) : '-';
+        const vz = r.features.volume_5m_z != null ? r.features.volume_5m_z.toFixed(2) : (r.features.volume_z != null ? r.features.volume_z.toFixed(2) : '-');
         const oig = r.features.oi_growth != null ? (r.features.oi_growth * 100).toFixed(2) + '%' : '-';
         const oiz = r.features.oi_growth_z != null ? r.features.oi_growth_z.toFixed(2) : '-';
         const isSub = selected.includes(r.symbol);
@@ -1414,6 +1424,7 @@
           <td class="dim mono">#${idx + 1}</td>
           <td class="bold mono">${r.symbol}</td>
           <td class="mono">$${(r.turnover / 1e6).toFixed(1)}M</td>
+          <td><span class="pill ${r.heat_state === 'DEAD_BURST' ? 'pill-rose' : r.heat_state === 'SUSTAINED_HOT' || r.heat_state === 'HOT_RETAINED' ? 'pill-green' : r.heat_state === 'FLUSH_EVENT' ? 'pill-amber' : 'pill-gray'}">${r.heat_state || 'NORMAL'}</span></td>
           <td class="mono ${Number(vz) > 2 ? 'pos bold' : ''}">${vz}</td>
           <td class="mono ${Number(oig.replace('%','')) > 0 ? 'pos' : 'neg'}">${oig}</td>
           <td class="mono ${Math.abs(Number(oiz)) > 2 ? 'pos' : ''}">${oiz}</td>
