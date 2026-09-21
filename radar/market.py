@@ -254,15 +254,22 @@ class Feed:
         return [sym.lower()+'@'+suffix for sym in sorted(symbols) for suffix in suffixes]
 
     async def _control(self,ws,method,params):
-        if not params:return
+        if not params or ws is None or getattr(ws, 'closed', False):return
         self._control_id=(self._control_id+1)%(2**31)
-        await ws.send_json(dict(method=method,params=params,id=self._control_id))
+        try:
+            await ws.send_json(dict(method=method,params=params,id=self._control_id))
+        except Exception as exc:
+            log.warning('WebSocket control command failed (%s): %s', method, exc)
 
     async def _update_subscriptions(self,group,ws,old,new):
+        if ws is None or getattr(ws, 'closed', False):return
         add=set(new)-set(old);remove=set(old)-set(new)
-        if add:await self._control(ws,'SUBSCRIBE',self._stream_names(group,add))
-        if remove:await self._control(ws,'UNSUBSCRIBE',self._stream_names(group,remove))
-        self._subscribed[group]=set(new)
+        try:
+            if add:await self._control(ws,'SUBSCRIBE',self._stream_names(group,add))
+            if remove:await self._control(ws,'UNSUBSCRIBE',self._stream_names(group,remove))
+            self._subscribed[group]=set(new)
+        except Exception as exc:
+            log.warning('Could not update %s subscriptions: %s', group, exc)
 
     async def stream(self,group,symbols=None):
         import aiohttp
@@ -359,13 +366,17 @@ class Feed:
 
     async def timer(self):
         while not self.stop.is_set():
-            now=self.client.now()
-            for sym in sorted(set(self.selected)|self.engine.monitoring_pins(now,include_expired=True)):
-                await self.emit(Event('TIMER',sym,f'{self.session_id}:{now}',now,now,{}))
-            if now//5000!=getattr(self,'_health_bucket',None):
-                self._health_bucket=now//5000
-                await self.select_monitoring()
-                await self.emit(Event('HEALTH','*',f'{self.session_id}:{now}',now,now,deepcopy(self.health)))
+            try:
+                now=self.client.now()
+                for sym in sorted(set(self.selected)|self.engine.monitoring_pins(now,include_expired=True)):
+                    await self.emit(Event('TIMER',sym,f'{self.session_id}:{now}',now,now,{}))
+                if now//5000!=getattr(self,'_health_bucket',None):
+                    self._health_bucket=now//5000
+                    await self.select_monitoring()
+                    await self.emit(Event('HEALTH','*',f'{self.session_id}:{now}',now,now,deepcopy(self.health)))
+            except asyncio.CancelledError:raise
+            except Exception as exc:
+                log.warning('Timer cycle error (will continue): %s', exc)
             await asyncio.sleep(1)
     async def run(self):
         try:
