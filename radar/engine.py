@@ -153,11 +153,7 @@ class Engine:
             # Once a causal attempt exists, keep watching regardless of discovery cooling.
             # Before an attempt, a one-off burst that fully unwound may release an otherwise
             # passive balance so scarce live streams follow genuinely active auctions.
-            f=attention.get('features') or {}
-            g5=abs(f.get('oi_growth') or 0.0);g15=abs(f.get('oi_growth_15m') or 0.0)
-            g_base=abs(f.get('oi_growth_base') or 0.0);v5_z=f.get('volume_5m_z') or 0.0
-            is_active=(g5>=0.0025 or g15>=0.0025 or g_base>=0.0075 or v5_z>=1.0)
-            active_heat=attention.get('heat_state')!='DEAD_BURST' and (not attention or is_active)
+            active_heat=attention.get('heat_state')!='DEAD_BURST'
             structural=bool(attempt) or (ep and active_heat)
             if structural and (include_expired or not ep or ep['expires']>now) and (s.get('meta') or {}).get('status')=='TRADING':pins.add(sym)
         return pins

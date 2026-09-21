@@ -131,36 +131,3 @@ def test_refresh_deep_scans_more_than_old_40_end_to_end(tmp_path):
             for t in f.stream_tasks:t.cancel()
             await asyncio.gather(worker,*f.stream_tasks,return_exceptions=True);e.close()
     asyncio.run(run())
-
-
-def test_oi_heavy_outscores_volume_churn():
-    f_vol = {'heat_state': 'NORMAL', 'volume_5m_z': 5.0, 'volume_10m_z': 2.0, 'oi_growth_z': 0.1, 'oi_growth_15m_z': 0.1, 'oi_retention': 0.1}
-    f_oi = {'heat_state': 'NORMAL', 'volume_5m_z': 1.0, 'volume_10m_z': 0.5, 'oi_growth_z': 3.0, 'oi_growth_15m_z': 2.5, 'oi_retention': 0.95}
-    assert _heat_score(f_oi) > _heat_score(f_vol)
-
-
-def test_compressed_normal_requires_real_oi_backing(tmp_path):
-    async def run():
-        e = Engine(tmp_path / 'oi-select.db', replace(Config(), universe_size=5))
-        f = Feed(e, FakeClient())
-        f.rankings = [
-            # Dormant normal compression with no OI backing -> rejected
-            dict(symbol='DEADCOMPUSDT', score=5, turnover=1e8, tradable=True, heat_state='NORMAL', compressed=True,
-                 monitor_eligible=False, features={'oi_retention': 0.1, 'oi_growth_z': -1.2, 'volume_5m_z': -0.5}),
-            # Normal compression with strong OI build and retention -> approved
-            dict(symbol='HOTCOMPUSDT', score=6, turnover=1e8, tradable=True, heat_state='NORMAL', compressed=True,
-                 monitor_eligible=True, features={'oi_retention': 0.95, 'oi_growth_z': 1.8, 'volume_5m_z': 0.8}),
-            # Active heat coin -> approved
-            dict(symbol='ACTIVERETUSDT', score=7, turnover=1e8, tradable=True, heat_state='HOT_RETAINED', compressed=False,
-                 monitor_eligible=True, features={'oi_retention': 0.85, 'oi_growth_z': 0.6, 'volume_5m_z': 0.6}),
-        ]
-        emitted = []
-        async def emit(ev): emitted.append(ev)
-        async def flush(): pass
-        async def sync(selected): f.selected = sorted(selected)
-        f.emit = emit; f.flush = flush; f.sync_streams = sync
-        await f.select_monitoring(force=True)
-        assert set(f.selected) == {'ACTIVERETUSDT', 'HOTCOMPUSDT'}
-        assert 'DEADCOMPUSDT' not in f.selected
-        e.close()
-    asyncio.run(run())

@@ -1,4 +1,3 @@
-import aiohttp
 """Read-only Binance adapters. No credentials and no private/order endpoints."""
 import asyncio,time,math,logging,statistics
 from dataclasses import replace
@@ -68,17 +67,12 @@ def _quick_activity(rows,now,clock_uncertainty_ms):
     score=max(0.,math.log(max(ratio,1e-9)))*1.4+move*35+rng*20
     return dict(score=score,volume_ratio=ratio,move_5m=move,range_5m=rng)
 
-def _is_active_participation(f):
-    g5=abs(f.get('oi_growth') or 0.0);g15=abs(f.get('oi_growth_15m') or 0.0)
-    g_base=abs(f.get('oi_growth_base') or 0.0);v5_z=f.get('volume_5m_z') or 0.0
-    return (g5>=0.0025 or g15>=0.0025 or g_base>=0.0075 or v5_z>=1.0)
-
 def _heat_score(f):
     state=f.get('heat_state','NORMAL')
     v5=max(0.,f.get('volume_5m_z') or 0.);v10=max(0.,f.get('volume_10m_z') or 0.)
     oi5=abs(f.get('oi_growth_z') or 0.);oi15=abs(f.get('oi_growth_15m_z') or 0.)
     retention=f.get('oi_retention');retention=.5 if retention is None else retention
-    base=0.8*v5+0.5*v10+1.8*oi5+1.2*oi15+1.8*retention
+    base=v5+.6*v10+.75*oi5+.45*oi15+.75*retention
     mult={'SUSTAINED_HOT':1.25,'HOT_RETAINED':1.15,'NEW_IMPULSE':.90,
           'COOLING':.70,'FLUSH_EVENT':1.05,'NORMAL':.20,'DEAD_BURST':0.0}.get(state,.2)
     return base*mult
@@ -217,11 +211,7 @@ class Feed:
         for turnover,sym,meta,move,q,quick_score in chosen:
             state=self.engine.state(sym);f=features(state,c);heat=f.get('heat_state','NORMAL');score=_heat_score(f)
             compressed=state['episode'] is not None
-            is_active=_is_active_participation(f)
-            if compressed:
-                monitor_eligible=is_active and (heat != 'DEAD_BURST')
-            else:
-                monitor_eligible=(heat not in ('NORMAL','DEAD_BURST')) or (sym in pins)
+            monitor_eligible=heat not in ('NORMAL','DEAD_BURST') or compressed or sym in pins
             rankings.append(dict(symbol=sym,score=score,turnover=turnover,features=f,heat_state=heat,
                                  quick=q,quick_score=quick_score,compressed=compressed,
                                  monitor_eligible=monitor_eligible,tradable=meta['status']=='TRADING'))
@@ -255,11 +245,8 @@ class Feed:
             task=self._subscriptions.get(group)
             if task is None or task.done():self._subscriptions[group]=asyncio.create_task(self.stream(group))
             ws=self._sockets.get(group)
-            if ws is not None and not getattr(ws, 'closed', False):
-                try:
-                    await self._update_subscriptions(group,ws,old,desired)
-                except Exception as err:
-                    log.warning('Failed to update subscriptions on %s: %s', group, err)
+            if ws is not None:
+                await self._update_subscriptions(group,ws,old,desired)
         self.selected=sorted(desired);self.stream_tasks=list(self._subscriptions.values())
 
     def _stream_names(self,group,symbols):
@@ -267,15 +254,11 @@ class Feed:
         return [sym.lower()+'@'+suffix for sym in sorted(symbols) for suffix in suffixes]
 
     async def _control(self,ws,method,params):
-        if not params or ws is None or getattr(ws, 'closed', False):return
+        if not params:return
         self._control_id=(self._control_id+1)%(2**31)
-        try:
-            await ws.send_json(dict(method=method,params=params,id=self._control_id))
-        except Exception as err:
-            log.warning('Subscription control %s failed: %s', method, err)
+        await ws.send_json(dict(method=method,params=params,id=self._control_id))
 
     async def _update_subscriptions(self,group,ws,old,new):
-        if ws is None or getattr(ws, 'closed', False):return
         add=set(new)-set(old);remove=set(old)-set(new)
         if add:await self._control(ws,'SUBSCRIBE',self._stream_names(group,add))
         if remove:await self._control(ws,'UNSUBSCRIBE',self._stream_names(group,remove))

@@ -7,5 +7,3 @@ data*/
 *.db-shm
 build/
 *.egg-info/
-
-scratch/
