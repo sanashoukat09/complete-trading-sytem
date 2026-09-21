@@ -1,0 +1,1442 @@
+{
+  "source": "/mnt/data/forensic_replay/live_history/data-paper-v61/radar.db",
+  "normalization": "counterfactual healthy local processing: GAP records omitted, market/meta/OI receipt=event+100ms, bars available 2.5s after close; historical quote/depth were not present and are not reconstructed",
+  "symbols": [
+    {
+      "symbol": "ALGOUSDT",
+      "events": 16150,
+      "attempts": 7,
+      "unique_candidate_attempts": 2,
+      "candidate_emissions": 3
+    },
+    {
+      "symbol": "ALLOUSDT",
+      "events": 2201,
+      "attempts": 0,
+      "unique_candidate_attempts": 0,
+      "candidate_emissions": 0
+    },
+    {
+      "symbol": "BANKUSDT",
+      "events": 235,
+      "attempts": 0,
+      "unique_candidate_attempts": 0,
+      "candidate_emissions": 0
+    },
+    {
+      "symbol": "BTWUSDT",
+      "events": 35962,
+      "attempts": 189,
+      "unique_candidate_attempts": 3,
+      "candidate_emissions": 214
+    },
+    {
+      "symbol": "CELRUSDT",
+      "events": 64866,
+      "attempts": 7,
+      "unique_candidate_attempts": 1,
+      "candidate_emissions": 62
+    },
+    {
+      "symbol": "CUSDT",
+      "events": 6682,
+      "attempts": 270,
+      "unique_candidate_attempts": 2,
+      "candidate_emissions": 155
+    },
+    {
+      "symbol": "EGLDUSDT",
+      "events": 5999,
+      "attempts": 6,
+      "unique_candidate_attempts": 3,
+      "candidate_emissions": 225
+    },
+    {
+      "symbol": "ENAUSDT",
+      "events": 83422,
+      "attempts": 37,
+      "unique_candidate_attempts": 2,
+      "candidate_emissions": 210
+    },
+    {
+      "symbol": "ENSOUSDT",
+      "events": 9976,
+      "attempts": 119,
+      "unique_candidate_attempts": 0,
+      "candidate_emissions": 0
+    },
+    {
+      "symbol": "FFUSDT",
+      "events": 181981,
+      "attempts": 2089,
+      "unique_candidate_attempts": 0,
+      "candidate_emissions": 0
+    },
+    {
+      "symbol": "FILUSDT",
+      "events": 14728,
+      "attempts": 11,
+      "unique_candidate_attempts": 0,
+      "candidate_emissions": 0
+    },
+    {
+      "symbol": "FLOCKUSDT",
+      "events": 47011,
+      "attempts": 33,
+      "unique_candidate_attempts": 1,
+      "candidate_emissions": 85
+    },
+    {
+      "symbol": "KMNOUSDT",
+      "events": 24333,
+      "attempts": 720,
+      "unique_candidate_attempts": 0,
+      "candidate_emissions": 0
+    },
+    {
+      "symbol": "MUSDT",
+      "events": 3904,
+      "attempts": 2,
+      "unique_candidate_attempts": 0,
+      "candidate_emissions": 0
+    },
+    {
+      "symbol": "MYXUSDT",
+      "events": 9291,
+      "attempts": 6,
+      "unique_candidate_attempts": 1,
+      "candidate_emissions": 16
+    },
+    {
+      "symbol": "NEARUSDT",
+      "events": 46998,
+      "attempts": 6,
+      "unique_candidate_attempts": 0,
+      "candidate_emissions": 0
+    },
+    {
+      "symbol": "PTBUSDT",
+      "events": 39813,
+      "attempts": 15,
+      "unique_candidate_attempts": 1,
+      "candidate_emissions": 45
+    },
+    {
+      "symbol": "SEIUSDT",
+      "events": 15465,
+      "attempts": 5,
+      "unique_candidate_attempts": 0,
+      "candidate_emissions": 0
+    },
+    {
+      "symbol": "STRKUSDT",
+      "events": 30887,
+      "attempts": 20,
+      "unique_candidate_attempts": 5,
+      "candidate_emissions": 397
+    },
+    {
+      "symbol": "SUSDT",
+      "events": 66579,
+      "attempts": 174,
+      "unique_candidate_attempts": 1,
+      "candidate_emissions": 5
+    },
+    {
+      "symbol": "SYNUSDT",
+      "events": 53173,
+      "attempts": 13,
+      "unique_candidate_attempts": 3,
+      "candidate_emissions": 2165
+    },
+    {
+      "symbol": "UBUSDT",
+      "events": 34717,
+      "attempts": 7,
+      "unique_candidate_attempts": 0,
+      "candidate_emissions": 0
+    },
+    {
+      "symbol": "USELESSUSDT",
+      "events": 78757,
+      "attempts": 323,
+      "unique_candidate_attempts": 3,
+      "candidate_emissions": 14
+    },
+    {
+      "symbol": "龙虾USDT",
+      "events": 44946,
+      "attempts": 162,
+      "unique_candidate_attempts": 1,
+      "candidate_emissions": 30
+    }
+  ],
+  "candidates": [
+    {
+      "symbol": "EGLDUSDT",
+      "attempt": "AT_e5f9bc3347892b1e7622e6be",
+      "kind": "UPTHRUST",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": -1,
+      "decision_ms": 1789928893714,
+      "trade_ms": 1789928893614,
+      "trigger": 3.688,
+      "stop": 3.699,
+      "mid": 3.6799999999999997,
+      "far": 3.666,
+      "first_passage": "MID",
+      "stop_hit": [
+        1789929942913,
+        3.699,
+        187429120
+      ],
+      "mid_hit": [
+        1789929394427,
+        3.679,
+        187428933
+      ],
+      "far_hit": [
+        1789930532337,
+        3.666,
+        187429369
+      ],
+      "max_favorable_from_trigger": 0.028000000000000025,
+      "max_adverse_from_trigger": -0.10899999999999999,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.9808342728297632,
+        "outside_adverse_share": 0.7097941359950093,
+        "effort_route": "LOW_EFFORT_EXHAUSTION",
+        "effort_ratio": 0.3816750186022899,
+        "excursion_fraction": 0.1071428571428611,
+        "excursion": 3.697,
+        "excursion_distance": 0.0030000000000001137,
+        "response_reference": 3.691,
+        "rotations": 4,
+        "best_response": 0.0029999999999996696,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "EGLDUSDT",
+      "attempt": "AT_185d35eb600da8c0777a4e24",
+      "kind": "UPTHRUST",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": -1,
+      "decision_ms": 1789930011407,
+      "trade_ms": 1789930011307,
+      "trigger": 3.688,
+      "stop": 3.7009999999999996,
+      "mid": 3.6799999999999997,
+      "far": 3.666,
+      "first_passage": "MID",
+      "stop_hit": [
+        1789931428695,
+        3.701,
+        187429721
+      ],
+      "mid_hit": [
+        1789930234951,
+        3.679,
+        187429253
+      ],
+      "far_hit": [
+        1789930532337,
+        3.666,
+        187429369
+      ],
+      "max_favorable_from_trigger": 0.028000000000000025,
+      "max_adverse_from_trigger": -0.10899999999999999,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.9653961885656971,
+        "outside_adverse_share": 0.9074057727954807,
+        "effort_route": "HIGH_EFFORT_POOR_RESULT",
+        "effort_ratio": 2.8444818147880224,
+        "excursion_fraction": 0.1785714285714246,
+        "excursion": 3.699,
+        "excursion_distance": 0.004999999999999893,
+        "response_reference": 3.691,
+        "rotations": 4,
+        "best_response": 0.0029999999999996696,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "EGLDUSDT",
+      "attempt": "AT_7114e42dcb8095e759b923ce",
+      "kind": "SPRING",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789930689377,
+      "trade_ms": 1789930689277,
+      "trigger": 3.671,
+      "stop": 3.6580000000000004,
+      "mid": 3.6799999999999997,
+      "far": 3.694,
+      "first_passage": "MID",
+      "stop_hit": null,
+      "mid_hit": [
+        1789930922065,
+        3.68,
+        187429497
+      ],
+      "far_hit": [
+        1789931360592,
+        3.694,
+        187429686
+      ],
+      "max_favorable_from_trigger": 0.12600000000000033,
+      "max_adverse_from_trigger": -0.004999999999999893,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.8338296605122097,
+        "outside_adverse_share": 0.8490504919625864,
+        "effort_route": "HIGH_EFFORT_POOR_RESULT",
+        "effort_ratio": 11.956337604052393,
+        "excursion_fraction": 0.21428571428570636,
+        "excursion": 3.66,
+        "excursion_distance": 0.005999999999999783,
+        "response_reference": 3.668,
+        "rotations": 4,
+        "best_response": 0.0029999999999996696,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "MYXUSDT",
+      "attempt": "AT_b95fc06ec5db579a87fc9a67",
+      "kind": "UPTHRUST",
+      "route": "DEFENDED_RETEST",
+      "direction": -1,
+      "decision_ms": 1789930746620,
+      "trade_ms": 1789930746520,
+      "trigger": 0.07823,
+      "stop": 0.07846,
+      "mid": 0.07779,
+      "far": 0.07725,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789930835871,
+        0.07846,
+        211593358
+      ],
+      "mid_hit": null,
+      "far_hit": null,
+      "max_favorable_from_trigger": 0.0003999999999999976,
+      "max_adverse_from_trigger": -0.0017700000000000077,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DEFENDED_RETEST",
+        "aggression": 0.837953091684435,
+        "outside_adverse_share": 0.38884243220642695,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 0.9437620081720028,
+        "excursion_fraction": 0.10185185185185114,
+        "excursion": 0.07844,
+        "excursion_distance": 0.00010999999999999899,
+        "response_reference": 0.07828,
+        "rotations": 4,
+        "best_response": 7.999999999999674e-05,
+        "retest_extreme": 0.07828
+      }
+    },
+    {
+      "symbol": "SUSDT",
+      "attempt": "AT_d8d9977cc9e306fbecfd1cf8",
+      "kind": "UPTHRUST",
+      "route": "DEFENDED_RETEST",
+      "direction": -1,
+      "decision_ms": 1789931142041,
+      "trade_ms": 1789931141941,
+      "trigger": 0.03759,
+      "stop": 0.03767,
+      "mid": 0.03737,
+      "far": 0.03712,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789931281502,
+        0.03767,
+        33638113
+      ],
+      "mid_hit": null,
+      "far_hit": null,
+      "max_favorable_from_trigger": 7.000000000000062e-05,
+      "max_adverse_from_trigger": -0.004520000000000003,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DEFENDED_RETEST",
+        "aggression": 0.6427351062249295,
+        "outside_adverse_share": 0.027420083304059817,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 1.6942485696019984,
+        "excursion_fraction": 0.06000000000000444,
+        "excursion": 0.03765,
+        "excursion_distance": 3.0000000000002247e-05,
+        "response_reference": 0.03763,
+        "rotations": 5,
+        "best_response": 3.999999999999837e-05,
+        "retest_extreme": 0.03763
+      }
+    },
+    {
+      "symbol": "USELESSUSDT",
+      "attempt": "AT_f1feb4df32279b3aa50f6407",
+      "kind": "SPRING",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789932550989,
+      "trade_ms": 1789932550889,
+      "trigger": 0.24169,
+      "stop": 0.2412468,
+      "mid": 0.2427,
+      "far": 0.24386,
+      "first_passage": "MID",
+      "stop_hit": [
+        1789935484951,
+        0.24124,
+        75128771
+      ],
+      "mid_hit": [
+        1789932811470,
+        0.2427,
+        75116210
+      ],
+      "far_hit": [
+        1789932968979,
+        0.24394,
+        75117170
+      ],
+      "max_favorable_from_trigger": 0.005420000000000008,
+      "max_adverse_from_trigger": -0.005209999999999992,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.8024357239512855,
+        "outside_adverse_share": 0.3186531385884714,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 2.6510818104410694,
+        "excursion_fraction": 0.1163793103448249,
+        "excursion": 0.24127,
+        "excursion_distance": 0.00026999999999999247,
+        "response_reference": 0.24157,
+        "rotations": 4,
+        "best_response": 0.00011999999999998123,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "USELESSUSDT",
+      "attempt": "AT_3032ba4597775caaba669795",
+      "kind": "UPTHRUST",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": -1,
+      "decision_ms": 1789933056560,
+      "trade_ms": 1789933056460,
+      "trigger": 0.24357,
+      "stop": 0.2442932,
+      "mid": 0.2427,
+      "far": 0.24154,
+      "first_passage": "MID",
+      "stop_hit": [
+        1789933502808,
+        0.2443,
+        75119265
+      ],
+      "mid_hit": [
+        1789933334064,
+        0.24267,
+        75118581
+      ],
+      "far_hit": [
+        1789935482692,
+        0.24154,
+        75128632
+      ],
+      "max_favorable_from_trigger": 0.00718000000000002,
+      "max_adverse_from_trigger": -0.0035399999999999876,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.9568800702733427,
+        "outside_adverse_share": 0.45265103640040444,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 0.35768141211792054,
+        "excursion_fraction": 0.17672413793103262,
+        "excursion": 0.24427,
+        "excursion_distance": 0.0004099999999999937,
+        "response_reference": 0.24383,
+        "rotations": 4,
+        "best_response": 0.0002999999999999947,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "STRKUSDT",
+      "attempt": "AT_4c417e740f9f03bbbcea7e28",
+      "kind": "SPRING",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789933884485,
+      "trade_ms": 1789933884385,
+      "trigger": 0.04918,
+      "stop": 0.048960000000000004,
+      "mid": 0.049495,
+      "far": 0.04989,
+      "first_passage": "MID",
+      "stop_hit": [
+        1789934889539,
+        0.04896,
+        74331932
+      ],
+      "mid_hit": [
+        1789933985934,
+        0.0495,
+        74328996
+      ],
+      "far_hit": [
+        1789934043883,
+        0.04989,
+        74329243
+      ],
+      "max_favorable_from_trigger": 0.0012799999999999964,
+      "max_adverse_from_trigger": -0.0002899999999999986,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.9007673396409148,
+        "outside_adverse_share": 0.25946136243619083,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 2.409775356496742,
+        "excursion_fraction": 0.1518987341772092,
+        "excursion": 0.04898,
+        "excursion_distance": 0.00011999999999999511,
+        "response_reference": 0.04913,
+        "rotations": 4,
+        "best_response": 5.000000000000143e-05,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "STRKUSDT",
+      "attempt": "AT_583cd0190be2fc5d3f817b16",
+      "kind": "UPTHRUST",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": -1,
+      "decision_ms": 1789934428688,
+      "trade_ms": 1789934428588,
+      "trigger": 0.04973,
+      "stop": 0.04995,
+      "mid": 0.049495,
+      "far": 0.0491,
+      "first_passage": "MID",
+      "stop_hit": [
+        1789935794813,
+        0.05019,
+        74334900
+      ],
+      "mid_hit": [
+        1789934499487,
+        0.04949,
+        74330782
+      ],
+      "far_hit": [
+        1789934888595,
+        0.0491,
+        74331904
+      ],
+      "max_favorable_from_trigger": 0.0008400000000000005,
+      "max_adverse_from_trigger": -0.0007299999999999945,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.9589320854765795,
+        "outside_adverse_share": 0.39400573500032127,
+        "effort_route": "LOW_EFFORT_EXHAUSTION",
+        "effort_ratio": 0.2527250689668985,
+        "excursion_fraction": 0.05063291139241185,
+        "excursion": 0.04993,
+        "excursion_distance": 4.000000000000531e-05,
+        "response_reference": 0.04986,
+        "rotations": 4,
+        "best_response": 0.00012999999999999817,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "STRKUSDT",
+      "attempt": "AT_d458f7373ea905182534484c",
+      "kind": "SPRING",
+      "route": "DIRECT_PRICE_LED_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789934919157,
+      "trade_ms": 1789934919057,
+      "trigger": 0.04919,
+      "stop": 0.048870000000000004,
+      "mid": 0.049495,
+      "far": 0.04989,
+      "first_passage": "MID",
+      "stop_hit": null,
+      "mid_hit": [
+        1789935674386,
+        0.0495,
+        74334211
+      ],
+      "far_hit": [
+        1789935760741,
+        0.04989,
+        74334630
+      ],
+      "max_favorable_from_trigger": 0.0012700000000000003,
+      "max_adverse_from_trigger": -0.00023999999999999716,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_PRICE_LED_RESPONSE",
+        "aggression": 0.4314435663235256,
+        "outside_adverse_share": 0.4366521008140565,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 0.2345042027987748,
+        "excursion_fraction": 0.26582278481012045,
+        "excursion": 0.04889,
+        "excursion_distance": 0.0002099999999999949,
+        "response_reference": 0.04913,
+        "rotations": 4,
+        "best_response": 5.9999999999997555e-05,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "STRKUSDT",
+      "attempt": "AT_3e9ad4c5ed3ae0f8ed639fe8",
+      "kind": "SPRING",
+      "route": "DIRECT_PRICE_LED_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789934952312,
+      "trade_ms": 1789934952212,
+      "trigger": 0.04919,
+      "stop": 0.048960000000000004,
+      "mid": 0.049495,
+      "far": 0.04989,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789935335282,
+        0.04896,
+        74333451
+      ],
+      "mid_hit": [
+        1789935674386,
+        0.0495,
+        74334211
+      ],
+      "far_hit": [
+        1789935760741,
+        0.04989,
+        74334630
+      ],
+      "max_favorable_from_trigger": 0.0012700000000000003,
+      "max_adverse_from_trigger": -0.00023000000000000104,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_PRICE_LED_RESPONSE",
+        "aggression": 0.4029148500408639,
+        "outside_adverse_share": 0.34734931205719766,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 1.7841171673699745,
+        "excursion_fraction": 0.1518987341772092,
+        "excursion": 0.04898,
+        "excursion_distance": 0.00011999999999999511,
+        "response_reference": 0.04913,
+        "rotations": 4,
+        "best_response": 5.9999999999997555e-05,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "STRKUSDT",
+      "attempt": "AT_c594d9cea8f679a0719bb107",
+      "kind": "SPRING",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789935394141,
+      "trade_ms": 1789935394041,
+      "trigger": 0.04917,
+      "stop": 0.04902,
+      "mid": 0.049495,
+      "far": 0.04989,
+      "first_passage": "MID",
+      "stop_hit": null,
+      "mid_hit": [
+        1789935674386,
+        0.0495,
+        74334211
+      ],
+      "far_hit": [
+        1789935760741,
+        0.04989,
+        74334630
+      ],
+      "max_favorable_from_trigger": 0.0012899999999999995,
+      "max_adverse_from_trigger": -0.00010999999999999899,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.7206371168757537,
+        "outside_adverse_share": 0.004261502223089442,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 1.9897544736926542,
+        "excursion_fraction": 0.0759493670886046,
+        "excursion": 0.04904,
+        "excursion_distance": 5.9999999999997555e-05,
+        "response_reference": 0.04913,
+        "rotations": 4,
+        "best_response": 3.999999999999837e-05,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "ENAUSDT",
+      "attempt": "AT_b535792620d63f9e4a11f907",
+      "kind": "SPRING",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789937825162,
+      "trade_ms": 1789937825062,
+      "trigger": 0.21707,
+      "stop": 0.2160239,
+      "mid": 0.218205,
+      "far": 0.21951,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789938098559,
+        0.21602,
+        182404579
+      ],
+      "mid_hit": [
+        1789941123265,
+        0.21821,
+        182431113
+      ],
+      "far_hit": [
+        1789941970874,
+        0.21951,
+        182436432
+      ],
+      "max_favorable_from_trigger": 0.006849999999999995,
+      "max_adverse_from_trigger": -0.0040000000000000036,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.8967213114754098,
+        "outside_adverse_share": 0.5978571936678869,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 0.5124544004989554,
+        "excursion_fraction": 0.3256704980842977,
+        "excursion": 0.21605,
+        "excursion_distance": 0.0008500000000000174,
+        "response_reference": 0.21693,
+        "rotations": 4,
+        "best_response": 0.00014000000000000123,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "CUSDT",
+      "attempt": "AT_8c9d95e9172debdd84f95c21",
+      "kind": "UPTHRUST",
+      "route": "DIRECT_PRICE_LED_RESPONSE",
+      "direction": -1,
+      "decision_ms": 1789937868305,
+      "trade_ms": 1789937868205,
+      "trigger": 0.08167,
+      "stop": 0.08196,
+      "mid": 0.08121,
+      "far": 0.08063,
+      "first_passage": "MID",
+      "stop_hit": null,
+      "mid_hit": [
+        1789938126200,
+        0.08108,
+        72489510
+      ],
+      "far_hit": [
+        1789938186427,
+        0.08043,
+        72489733
+      ],
+      "max_favorable_from_trigger": 0.0032000000000000084,
+      "max_adverse_from_trigger": -8.999999999999286e-05,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DIRECT_PRICE_LED_RESPONSE",
+        "aggression": 0.47517251725172516,
+        "outside_adverse_share": 0.5468835429196283,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 1.4159821776759436,
+        "excursion_fraction": 0.129310344827583,
+        "excursion": 0.08194,
+        "excursion_distance": 0.00014999999999999736,
+        "response_reference": 0.08177,
+        "rotations": 4,
+        "best_response": 0.00010999999999999899,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "CUSDT",
+      "attempt": "AT_079a4213b6a05f1a47729cb0",
+      "kind": "SPRING",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789938339661,
+      "trade_ms": 1789938339561,
+      "trigger": 0.08072,
+      "stop": 0.08041999999999999,
+      "mid": 0.08121,
+      "far": 0.08179,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789938420169,
+        0.08041,
+        72490231
+      ],
+      "mid_hit": null,
+      "far_hit": null,
+      "max_favorable_from_trigger": 6.0000000000004494e-05,
+      "max_adverse_from_trigger": -0.002250000000000002,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.9484777517564403,
+        "outside_adverse_share": 0.7326441188552649,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 0.49601504944766217,
+        "excursion_fraction": 0.16379310344827103,
+        "excursion": 0.08044,
+        "excursion_distance": 0.00018999999999999573,
+        "response_reference": 0.08066,
+        "rotations": 4,
+        "best_response": 6.0000000000004494e-05,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "SYNUSDT",
+      "attempt": "AT_13c6a3e95d4c7e66a52795fe",
+      "kind": "UPTHRUST",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": -1,
+      "decision_ms": 1789939403624,
+      "trade_ms": 1789939403524,
+      "trigger": 0.21763,
+      "stop": 0.2184955,
+      "mid": 0.215555,
+      "far": 0.21328,
+      "first_passage": "MID",
+      "stop_hit": [
+        1789940443473,
+        0.2185,
+        88874103
+      ],
+      "mid_hit": [
+        1789939444800,
+        0.21555,
+        88867548
+      ],
+      "far_hit": [
+        1789942709219,
+        0.21327,
+        88887899
+      ],
+      "max_favorable_from_trigger": 0.0071199999999999875,
+      "max_adverse_from_trigger": -0.007230000000000014,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.6599805888062116,
+        "outside_adverse_share": 0.3446188460920341,
+        "effort_route": "LOW_EFFORT_EXHAUSTION",
+        "effort_ratio": 0.33935659320666894,
+        "excursion_fraction": 0.1362637362637384,
+        "excursion": 0.21845,
+        "excursion_distance": 0.0006200000000000094,
+        "response_reference": 0.21778,
+        "rotations": 4,
+        "best_response": 0.00018000000000001348,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "SYNUSDT",
+      "attempt": "AT_b92d0b07e7781e47e0a6087e",
+      "kind": "UPTHRUST",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": -1,
+      "decision_ms": 1789940263607,
+      "trade_ms": 1789940263507,
+      "trigger": 0.21733,
+      "stop": 0.2183855,
+      "mid": 0.215555,
+      "far": 0.21328,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789940407476,
+        0.2184,
+        88874001
+      ],
+      "mid_hit": [
+        1789941733045,
+        0.21555,
+        88881601
+      ],
+      "far_hit": [
+        1789942709219,
+        0.21327,
+        88887899
+      ],
+      "max_favorable_from_trigger": 0.006819999999999993,
+      "max_adverse_from_trigger": -0.007530000000000009,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.6376360808709176,
+        "outside_adverse_share": 0.36470200856108004,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 3.0124473459298646,
+        "excursion_fraction": 0.11208791208791442,
+        "excursion": 0.21834,
+        "excursion_distance": 0.0005100000000000104,
+        "response_reference": 0.21776,
+        "rotations": 4,
+        "best_response": 0.00046000000000001595,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "SYNUSDT",
+      "attempt": "AT_cd8d6b906bb82a9b0e4376a5",
+      "kind": "UPTHRUST",
+      "route": "DEFENDED_RETEST",
+      "direction": -1,
+      "decision_ms": 1789940606900,
+      "trade_ms": 1789940606800,
+      "trigger": 0.21761,
+      "stop": 0.2183055,
+      "mid": 0.215555,
+      "far": 0.21328,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789940864309,
+        0.21831,
+        88875959
+      ],
+      "mid_hit": [
+        1789941733045,
+        0.21555,
+        88881601
+      ],
+      "far_hit": [
+        1789942709219,
+        0.21327,
+        88887899
+      ],
+      "max_favorable_from_trigger": 0.007099999999999995,
+      "max_adverse_from_trigger": -0.0072500000000000064,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DEFENDED_RETEST",
+        "aggression": 0.7694610778443114,
+        "outside_adverse_share": 0.26965165055626483,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 1.5104935004313595,
+        "excursion_fraction": 0.09450549450549754,
+        "excursion": 0.21826,
+        "excursion_distance": 0.0004300000000000137,
+        "response_reference": 0.21775,
+        "rotations": 4,
+        "best_response": 0.00023999999999999022,
+        "retest_extreme": 0.21775
+      }
+    },
+    {
+      "symbol": "ENAUSDT",
+      "attempt": "AT_599def0de0b2e7732cc8dc99",
+      "kind": "UPTHRUST",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": -1,
+      "decision_ms": 1789941137159,
+      "trade_ms": 1789941137059,
+      "trigger": 0.21771,
+      "stop": 0.21829880000000002,
+      "mid": 0.21604,
+      "far": 0.2141,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789941621128,
+        0.2183,
+        182433018
+      ],
+      "mid_hit": null,
+      "far_hit": null,
+      "max_favorable_from_trigger": 0.0016199999999999826,
+      "max_adverse_from_trigger": -0.006210000000000021,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.5896216803640563,
+        "outside_adverse_share": 0.22198458224102577,
+        "effort_route": "LOW_EFFORT_EXHAUSTION",
+        "effort_ratio": 0.6823109180644453,
+        "excursion_fraction": 0.07216494845360899,
+        "excursion": 0.21826,
+        "excursion_distance": 0.00028000000000000247,
+        "response_reference": 0.21794,
+        "rotations": 5,
+        "best_response": 0.00023000000000000798,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "龙虾USDT",
+      "attempt": "AT_734b00f0fcdaf5c27be83517",
+      "kind": "SPRING",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789942831388,
+      "trade_ms": 1789942831288,
+      "trigger": 0.23684,
+      "stop": 0.23585520000000001,
+      "mid": 0.23763,
+      "far": 0.23887,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789942982608,
+        0.23585,
+        58113874
+      ],
+      "mid_hit": [
+        1789943961386,
+        0.237635,
+        58118193
+      ],
+      "far_hit": [
+        1789944297843,
+        0.238876,
+        58119115
+      ],
+      "max_favorable_from_trigger": 0.006400000000000017,
+      "max_adverse_from_trigger": -0.0022260000000000058,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.6869770524397316,
+        "outside_adverse_share": 1.0,
+        "effort_route": "HIGH_EFFORT_POOR_RESULT",
+        "effort_ratio": 1.6017957709063861,
+        "excursion_fraction": 0.20564516129031477,
+        "excursion": 0.23588,
+        "excursion_distance": 0.0005099999999999827,
+        "response_reference": 0.23676,
+        "rotations": 5,
+        "best_response": 7.999999999999674e-05,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "USELESSUSDT",
+      "attempt": "AT_02ebd5a5d1f552a3a49d5990",
+      "kind": "SPRING",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789943083127,
+      "trade_ms": 1789943083027,
+      "trigger": 0.23786,
+      "stop": 0.2375158,
+      "mid": 0.23891,
+      "far": 0.24012,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789943162083,
+        0.23751,
+        75167178
+      ],
+      "mid_hit": [
+        1789943424745,
+        0.23891,
+        75167883
+      ],
+      "far_hit": [
+        1789948497314,
+        0.24012,
+        75187413
+      ],
+      "max_favorable_from_trigger": 0.00841,
+      "max_adverse_from_trigger": -0.001469999999999999,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 1.0,
+        "outside_adverse_share": 0.1686383085829348,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 1.9879226778219232,
+        "excursion_fraction": 0.066115702479336,
+        "excursion": 0.23754,
+        "excursion_distance": 0.00015999999999999348,
+        "response_reference": 0.23773,
+        "rotations": 5,
+        "best_response": 0.00012999999999999123,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "BTWUSDT",
+      "attempt": "AT_21172a697572fcab3f052bd8",
+      "kind": "UPTHRUST",
+      "route": "DEFENDED_RETEST",
+      "direction": -1,
+      "decision_ms": 1789943485976,
+      "trade_ms": 1789943485876,
+      "trigger": 0.7637,
+      "stop": 0.7646999999999999,
+      "mid": 0.7604500000000001,
+      "far": 0.7569,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789943495150,
+        0.7647,
+        128975458
+      ],
+      "mid_hit": [
+        1789944405634,
+        0.7547,
+        128980176
+      ],
+      "far_hit": [
+        1789944405634,
+        0.7547,
+        128980176
+      ],
+      "max_favorable_from_trigger": 0.03537000000000001,
+      "max_adverse_from_trigger": -0.00979999999999992,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DEFENDED_RETEST",
+        "aggression": 0.8484136310223267,
+        "outside_adverse_share": 0.8777241723506904,
+        "effort_route": "HIGH_EFFORT_POOR_RESULT",
+        "effort_ratio": 1.9579273013872756,
+        "excursion_fraction": 0.07042253521125989,
+        "excursion": 0.7645,
+        "excursion_distance": 0.0004999999999999449,
+        "response_reference": 0.764,
+        "rotations": 4,
+        "best_response": 0.0007000000000000339,
+        "retest_extreme": 0.764
+      }
+    },
+    {
+      "symbol": "BTWUSDT",
+      "attempt": "AT_6c7b03ca637ee34a8d6f9b4f",
+      "kind": "UPTHRUST",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": -1,
+      "decision_ms": 1789943536615,
+      "trade_ms": 1789943536515,
+      "trigger": 0.7633,
+      "stop": 0.7652,
+      "mid": 0.7604500000000001,
+      "far": 0.7569,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789944004648,
+        0.7659,
+        128976926
+      ],
+      "mid_hit": [
+        1789944405634,
+        0.7547,
+        128980176
+      ],
+      "far_hit": [
+        1789944405634,
+        0.7547,
+        128980176
+      ],
+      "max_favorable_from_trigger": 0.034969999999999946,
+      "max_adverse_from_trigger": -0.010199999999999987,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.7469955724225174,
+        "outside_adverse_share": 0.6135369906138868,
+        "effort_route": "HIGH_EFFORT_POOR_RESULT",
+        "effort_ratio": 1.8774287754071488,
+        "excursion_fraction": 0.14084507042253544,
+        "excursion": 0.765,
+        "excursion_distance": 0.0010000000000000009,
+        "response_reference": 0.7637,
+        "rotations": 4,
+        "best_response": 0.00040000000000006697,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "ALGOUSDT",
+      "attempt": "AT_9add6ce33ca593ef2dbffed3",
+      "kind": "SPRING",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789944399540,
+      "trade_ms": 1789944399440,
+      "trigger": 0.10966,
+      "stop": 0.10947,
+      "mid": 0.11014499999999999,
+      "far": 0.11068,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789944559636,
+        0.10947,
+        188559607
+      ],
+      "mid_hit": [
+        1789949822378,
+        0.11015,
+        188568341
+      ],
+      "far_hit": null,
+      "max_favorable_from_trigger": 0.0009800000000000086,
+      "max_adverse_from_trigger": -0.002109999999999987,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 1.0,
+        "outside_adverse_share": 0.7466516439083088,
+        "effort_route": "HIGH_EFFORT_POOR_RESULT",
+        "effort_ratio": 29.530826471651118,
+        "excursion_fraction": 0.11214953271027564,
+        "excursion": 0.10949,
+        "excursion_distance": 0.00011999999999999511,
+        "response_reference": 0.10963,
+        "rotations": 4,
+        "best_response": 2.999999999998837e-05,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "ALGOUSDT",
+      "attempt": "AT_4a838990ecf31b5fa9424b8e",
+      "kind": "SPRING",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789944637693,
+      "trade_ms": 1789944637593,
+      "trigger": 0.10969,
+      "stop": 0.10944,
+      "mid": 0.11014499999999999,
+      "far": 0.11068,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789944727716,
+        0.10944,
+        188559756
+      ],
+      "mid_hit": [
+        1789949822378,
+        0.11015,
+        188568341
+      ],
+      "far_hit": null,
+      "max_favorable_from_trigger": 0.0009500000000000064,
+      "max_adverse_from_trigger": -0.002139999999999989,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 1.0,
+        "outside_adverse_share": 0.3937462520059096,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 1.0055148020504099,
+        "excursion_fraction": 0.1401869158878478,
+        "excursion": 0.10946,
+        "excursion_distance": 0.00014999999999999736,
+        "response_reference": 0.10963,
+        "rotations": 4,
+        "best_response": 5.9999999999990616e-05,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "CELRUSDT",
+      "attempt": "AT_60ef3eef10f9cfa0b35370a4",
+      "kind": "SPRING",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": 1,
+      "decision_ms": 1789945049009,
+      "trade_ms": 1789945048909,
+      "trigger": 0.00325,
+      "stop": 0.003235,
+      "mid": 0.003286,
+      "far": 0.003329,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789945221398,
+        0.003235,
+        103275313
+      ],
+      "mid_hit": [
+        1789945799237,
+        0.003286,
+        103277222
+      ],
+      "far_hit": null,
+      "max_favorable_from_trigger": 6.400000000000025e-05,
+      "max_adverse_from_trigger": -0.00012299999999999985,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.8467072176902976,
+        "outside_adverse_share": 0.3190829589618262,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 2.1478099887587954,
+        "excursion_fraction": 0.06976744186046417,
+        "excursion": 0.003237,
+        "excursion_distance": 5.999999999999929e-06,
+        "response_reference": 0.003245,
+        "rotations": 4,
+        "best_response": 4.999999999999796e-06,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "PTBUSDT",
+      "attempt": "AT_7660ab9607152c57f9159ca8",
+      "kind": "UPTHRUST",
+      "route": "DEFENDED_RETEST",
+      "direction": -1,
+      "decision_ms": 1789945532676,
+      "trade_ms": 1789945532576,
+      "trigger": 0.0009422,
+      "stop": 0.000946687,
+      "mid": 0.00092855,
+      "far": 0.0009142,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789945565484,
+        0.0009514,
+        43766177
+      ],
+      "mid_hit": [
+        1789947857634,
+        0.0009166,
+        43779870
+      ],
+      "far_hit": [
+        1789951205684,
+        0.0009137,
+        43804184
+      ],
+      "max_favorable_from_trigger": 2.8499999999999988e-05,
+      "max_adverse_from_trigger": -3.1800000000000014e-05,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DEFENDED_RETEST",
+        "aggression": 0.4699246688103477,
+        "outside_adverse_share": 0.49920418931495697,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 1.9987638268598467,
+        "excursion_fraction": 0.12195121951219623,
+        "excursion": 0.0009464,
+        "excursion_distance": 3.500000000000031e-06,
+        "response_reference": 0.0009431,
+        "rotations": 4,
+        "best_response": 1.899999999999992e-06,
+        "retest_extreme": 0.0009431
+      }
+    },
+    {
+      "symbol": "FLOCKUSDT",
+      "attempt": "AT_b8da845aebe0d5c45205b2a5",
+      "kind": "UPTHRUST",
+      "route": "DIRECT_FLOW_RESPONSE",
+      "direction": -1,
+      "decision_ms": 1789948844409,
+      "trade_ms": 1789948844309,
+      "trigger": 0.06558,
+      "stop": 0.06630000000000001,
+      "mid": 0.06529499999999999,
+      "far": 0.06488,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789948912006,
+        0.06636,
+        19785070
+      ],
+      "mid_hit": [
+        1789949367002,
+        0.06529,
+        19787661
+      ],
+      "far_hit": [
+        1789949473187,
+        0.06471,
+        19788417
+      ],
+      "max_favorable_from_trigger": 0.000899999999999998,
+      "max_adverse_from_trigger": -0.0014399999999999968,
+      "explanation": {
+        "kind": "UPTHRUST",
+        "route": "DIRECT_FLOW_RESPONSE",
+        "aggression": 0.5547027718992729,
+        "outside_adverse_share": 0.28988604675845964,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 0.5476501004032397,
+        "excursion_fraction": 0.6867469879517992,
+        "excursion": 0.06628,
+        "excursion_distance": 0.0005700000000000011,
+        "response_reference": 0.06569,
+        "rotations": 4,
+        "best_response": 0.0001799999999999996,
+        "retest_extreme": null
+      }
+    },
+    {
+      "symbol": "BTWUSDT",
+      "attempt": "AT_9adc5f9794cbb5f7491d6b64",
+      "kind": "SPRING",
+      "route": "DEFENDED_RETEST",
+      "direction": 1,
+      "decision_ms": 1789950485386,
+      "trade_ms": 1789950485286,
+      "trigger": 0.7437,
+      "stop": 0.7398,
+      "mid": 0.74895,
+      "far": 0.7548,
+      "first_passage": "STOP",
+      "stop_hit": [
+        1789950703113,
+        0.7397,
+        129007580
+      ],
+      "mid_hit": null,
+      "far_hit": null,
+      "max_favorable_from_trigger": 0.0025999999999999357,
+      "max_adverse_from_trigger": -0.015369999999999995,
+      "explanation": {
+        "kind": "SPRING",
+        "route": "DEFENDED_RETEST",
+        "aggression": 0.718558282208589,
+        "outside_adverse_share": 0.6150793073869997,
+        "effort_route": "MIXED_EFFORT_RESULT",
+        "effort_ratio": 1.03403410589219,
+        "excursion_fraction": 0.26495726495726324,
+        "excursion": 0.74,
+        "excursion_distance": 0.0030999999999999917,
+        "response_reference": 0.7433,
+        "rotations": 4,
+        "best_response": 0.0023699999999999832,
+        "retest_extreme": 0.7433
+      }
+    }
+  ]
+}

@@ -1,0 +1,241 @@
+{
+  "mode": "paper",
+  "release": "6.1.3-live-data-paper",
+  "pending_events": 0,
+  "processed_events": 236,
+  "runtime_health": {},
+  "universe": {
+    "ranking": [],
+    "selected": [
+      "TESTUSDT"
+    ]
+  },
+  "positions": [],
+  "outcomes": [
+    {
+      "closed_ms": 1800000024000,
+      "fees": 1.9978983669500001,
+      "funding": 0.0,
+      "funding_complete": false,
+      "initial_risk": 29.9768107817496,
+      "net": 128.53637013305018,
+      "net_r": 4.287860075205376,
+      "position_id": "P_8e89fca5ff23dc7b5bf4d6aaf0110336",
+      "remaining_qty": 0.0,
+      "status": "TP2_HIT"
+    }
+  ],
+  "decisions": [
+    {
+      "seq": 236,
+      "symbol": "TESTUSDT",
+      "action": "EXIT",
+      "reason": "TP2_HIT",
+      "payload": "{\"closed_ms\":1800000024000,\"fees\":1.9978983669500001,\"funding\":0.0,\"funding_complete\":false,\"initial_risk\":29.9768107817496,\"net\":128.53637013305018,\"net_r\":4.287860075205376,\"position_id\":\"P_8e89fca5ff23dc7b5bf4d6aaf0110336\",\"remaining_qty\":0.0,\"status\":\"TP2_HIT\"}"
+    },
+    {
+      "seq": 232,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "ATTEMPT_CONSUMED",
+      "payload": "{\"attempt\":{\"anchor\":100.3,\"baseline_rate\":17.46031746031746,\"best_progress\":0.28999999999999204,\"direction\":1,\"evidence\":[\"binance:USDT-PERP:TESTUSDT:TRADE:23\",\"binance:USDT-PERP:TESTUSDT:TRADE:24\"],\"extreme\":99.5,\"id\":\"AT_275cb7cbc1a5b1344b96703a\",\"lost_count\":0,\"lost_since\":null,\"outside\":[{\"at\":1800000017800,\"buy\":true,\"id\":\"binance:USDT-PERP:TESTUSDT:TRADE:23\",\"price\":99.5,\"qty\":10.0}],\"quality\":{\"baseline_rate\":17.46031746031746,\"effort_ratio\":0.5727272727272728,\"excursion_fraction\":0.05,\"outside_adverse_share\":0.0,\"outside_rate\":10.0,\"route\":\"LOW_EFFORT_EXHAUSTION\"},\"reclaim_price\":100.2,\"reclaimed\":1800000018400,\"response\":[{\"at\":1800000019000,\"buy\":true,\"id\":\"binance:USDT-PERP:TESTUSDT:TRADE:25\",\"price\":100.35,\"qty\":10.0},{\"at\":1800000019600,\"buy\":true,\"id\":\"binance:USDT-PERP:TESTUSDT:TRADE:26\",\"price\":100.41,\"qty\":10.0},{\"at\":1800000020200,\"buy\":true,\"id\":\"binance:USDT-PERP:TESTUSDT:TRADE:27\",\"price\":100.47,\"qty\":10.0},{\"at\":1800000020800,\"buy\":true,\"id\":\"binance:USDT-PERP:TESTUSDT:TRADE:28\",\"price\":100.53,\"qty\":10.0},{\"at\":1800000021400,\"buy\":true,\"id\":\"binance:USDT-PERP:TESTUSDT:TRADE:29\",\"price\":100.58999999999999,\"qty\":10.0}],\"retest_extreme\":null,\"retest_started\":null,\"stage\":\"CONSUMED\",\"started\":1800000017800},\"episode\":{\"baseline_width\":50.0,\"contraction\":0.2,\"created\":1800000003000,\"expires\":1800005403000,\"id\":\"EP_9de0a54d2844fa550965b727\",\"lower\":100.0,\"rotations\":10,\"source_end_ms\":1799999999999,\"source_start_ms\":1799998200000,\"upper\":110.0,\"version\":1,\"width\":10.0},\"features\":{\"heat_state\":\"HOT_RETAINED\",\"oi_growth\":0.0009995003330834232,\"oi_growth_15m\":0.0029985009992503277,\"oi_growth_15m_z\":0.0,\"oi_growth_z\":0.0,\"oi_impulse_direction\":1,\"oi_retention\":1.0,\"oi_reversal_fraction\":0.0,\"prior_oi_growth_z\":0.0,\"prior_volume_5m_z\":-0.22483025315886507,\"volume_10m_z\":0.44966050631773014,\"volume_5m\":518.0,\"volume_5m_z\":0.6744907594765952,\"volume_z\":-1.011736139214893}}"
+    },
+    {
+      "seq": 229,
+      "symbol": "TESTUSDT",
+      "action": "INTENT",
+      "reason": "PAPER_AWAIT_NEXT_QUOTE",
+      "payload": "{\"direction\":1,\"entry\":100.65029999999999,\"episode\":\"EP_9de0a54d2844fa550965b727\",\"episode_version\":1,\"evidence\":[\"binance:USDT-PERP:TESTUSDT:TRADE:23\",\"binance:USDT-PERP:TESTUSDT:TRADE:24\",\"binance:USDT-PERP:TESTUSDT:TRADE:25\",\"binance:USDT-PERP:TESTUSDT:TRADE:26\",\"binance:USDT-PERP:TESTUSDT:TRADE:27\",\"binance:USDT-PERP:TESTUSDT:TRADE:28\",\"binance:USDT-PERP:TESTUSDT:TRADE:29\"],\"explanation\":{\"aggression\":1.0,\"best_response\":0.28999999999999204,\"effort_ratio\":0.5727272727272728,\"effort_route\":\"LOW_EFFORT_EXHAUSTION\",\"excursion\":99.5,\"excursion_distance\":0.5,\"excursion_fraction\":0.05,\"kind\":\"SPRING\",\"outside_adverse_share\":0.0,\"response_reference\":100.3,\"retest_extreme\":null,\"rotations\":10,\"route\":\"DIRECT_FLOW_RESPONSE\"},\"far\":110.0,\"features\":{\"heat_state\":\"HOT_RETAINED\",\"oi_growth\":0.0009995003330834232,\"oi_growth_15m\":0.0029985009992503277,\"oi_growth_15m_z\":0.0,\"oi_growth_z\":0.0,\"oi_impulse_direction\":1,\"oi_retention\":1.0,\"oi_reversal_fraction\":0.0,\"prior_oi_growth_z\":0.0,\"prior_volume_5m_z\":-0.22483025315886507,\"volume_10m_z\":0.44966050631773014,\"volume_5m\":518.0,\"volume_5m_z\":0.6744907594765952,\"volume_z\":-1.011736139214893},\"id\":\"AT_275cb7cbc1a5b1344b96703a\",\"mid\":105.0,\"net_rr\":2.7282340392057813,\"oi_context\":{\"available\":true,\"fresh\":true,\"last_at\":1800000000000},\"quantity\":19.97,\"risk\":29.98097298199963,\"stop\":99.4,\"tp1\":105.0,\"tp2\":110.0,\"trigger\":100.58999999999999}"
+    },
+    {
+      "seq": 214,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "WAIT_RESPONSE",
+      "payload": "{\"attempt\":{\"anchor\":100.3,\"baseline_rate\":17.46031746031746,\"best_progress\":0.0,\"direction\":1,\"evidence\":[\"binance:USDT-PERP:TESTUSDT:TRADE:23\",\"binance:USDT-PERP:TESTUSDT:TRADE:24\"],\"extreme\":99.5,\"id\":\"AT_275cb7cbc1a5b1344b96703a\",\"lost_count\":0,\"lost_since\":null,\"outside\":[{\"at\":1800000017800,\"buy\":true,\"id\":\"binance:USDT-PERP:TESTUSDT:TRADE:23\",\"price\":99.5,\"qty\":10.0}],\"quality\":{\"baseline_rate\":17.46031746031746,\"effort_ratio\":0.5727272727272728,\"excursion_fraction\":0.05,\"outside_adverse_share\":0.0,\"outside_rate\":10.0,\"route\":\"LOW_EFFORT_EXHAUSTION\"},\"reclaim_price\":100.2,\"reclaimed\":1800000018400,\"response\":[],\"retest_extreme\":null,\"retest_started\":null,\"stage\":\"RECLAIMED\",\"started\":1800000017800},\"episode\":{\"baseline_width\":50.0,\"contraction\":0.2,\"created\":1800000003000,\"expires\":1800005403000,\"id\":\"EP_9de0a54d2844fa550965b727\",\"lower\":100.0,\"rotations\":10,\"source_end_ms\":1799999999999,\"source_start_ms\":1799998200000,\"upper\":110.0,\"version\":1,\"width\":10.0},\"features\":{\"heat_state\":\"HOT_RETAINED\",\"oi_growth\":0.0009995003330834232,\"oi_growth_15m\":0.0029985009992503277,\"oi_growth_15m_z\":0.0,\"oi_growth_z\":0.0,\"oi_impulse_direction\":1,\"oi_retention\":1.0,\"oi_reversal_fraction\":0.0,\"prior_oi_growth_z\":0.0,\"prior_volume_5m_z\":-0.22483025315886507,\"volume_10m_z\":0.44966050631773014,\"volume_5m\":518.0,\"volume_5m_z\":0.6744907594765952,\"volume_z\":-1.011736139214893}}"
+    },
+    {
+      "seq": 211,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "OUTSIDE_ATTEMPT",
+      "payload": "{\"attempt\":{\"anchor\":100.3,\"baseline_rate\":17.46031746031746,\"best_progress\":0.0,\"direction\":1,\"evidence\":[\"binance:USDT-PERP:TESTUSDT:TRADE:23\"],\"extreme\":99.5,\"id\":\"AT_275cb7cbc1a5b1344b96703a\",\"lost_count\":0,\"lost_since\":null,\"outside\":[{\"at\":1800000017800,\"buy\":true,\"id\":\"binance:USDT-PERP:TESTUSDT:TRADE:23\",\"price\":99.5,\"qty\":10.0}],\"quality\":null,\"response\":[],\"retest_extreme\":null,\"stage\":\"OUTSIDE\",\"started\":1800000017800},\"episode\":{\"baseline_width\":50.0,\"contraction\":0.2,\"created\":1800000003000,\"expires\":1800005403000,\"id\":\"EP_9de0a54d2844fa550965b727\",\"lower\":100.0,\"rotations\":10,\"source_end_ms\":1799999999999,\"source_start_ms\":1799998200000,\"upper\":110.0,\"version\":1,\"width\":10.0},\"features\":{\"heat_state\":\"HOT_RETAINED\",\"oi_growth\":0.0009995003330834232,\"oi_growth_15m\":0.0029985009992503277,\"oi_growth_15m_z\":0.0,\"oi_growth_z\":0.0,\"oi_impulse_direction\":1,\"oi_retention\":1.0,\"oi_reversal_fraction\":0.0,\"prior_oi_growth_z\":0.0,\"prior_volume_5m_z\":-0.22483025315886507,\"volume_10m_z\":0.44966050631773014,\"volume_5m\":518.0,\"volume_5m_z\":0.6744907594765952,\"volume_z\":-1.011736139214893}}"
+    },
+    {
+      "seq": 202,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "WAIT_BOUNDARY_SWEEP",
+      "payload": "{\"attempt\":null,\"episode\":{\"baseline_width\":50.0,\"contraction\":0.2,\"created\":1800000003000,\"expires\":1800005403000,\"id\":\"EP_9de0a54d2844fa550965b727\",\"lower\":100.0,\"rotations\":10,\"source_end_ms\":1799999999999,\"source_start_ms\":1799998200000,\"upper\":110.0,\"version\":1,\"width\":10.0},\"features\":{\"heat_state\":\"HOT_RETAINED\",\"oi_growth\":0.0009995003330834232,\"oi_growth_15m\":0.0029985009992503277,\"oi_growth_15m_z\":0.0,\"oi_growth_z\":0.0,\"oi_impulse_direction\":1,\"oi_retention\":1.0,\"oi_reversal_fraction\":0.0,\"prior_oi_growth_z\":0.0,\"prior_volume_5m_z\":-0.22483025315886507,\"volume_10m_z\":0.44966050631773014,\"volume_5m\":518.0,\"volume_5m_z\":0.6744907594765952,\"volume_z\":-1.011736139214893}}"
+    },
+    {
+      "seq": 145,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "FLOW_WARMUP",
+      "payload": "{\"attempt\":null,\"episode\":{\"baseline_width\":50.0,\"contraction\":0.2,\"created\":1800000003000,\"expires\":1800005403000,\"id\":\"EP_9de0a54d2844fa550965b727\",\"lower\":100.0,\"rotations\":10,\"source_end_ms\":1799999999999,\"source_start_ms\":1799998200000,\"upper\":110.0,\"version\":1,\"width\":10.0},\"features\":{\"heat_state\":\"HOT_RETAINED\",\"oi_growth\":0.0009995003330834232,\"oi_growth_15m\":0.0029985009992503277,\"oi_growth_15m_z\":0.0,\"oi_growth_z\":0.0,\"oi_impulse_direction\":1,\"oi_retention\":1.0,\"oi_reversal_fraction\":0.0,\"prior_oi_growth_z\":0.0,\"prior_volume_5m_z\":-0.22483025315886507,\"volume_10m_z\":0.44966050631773014,\"volume_5m\":518.0,\"volume_5m_z\":0.6744907594765952,\"volume_z\":-1.011736139214893}}"
+    },
+    {
+      "seq": 122,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "BALANCE_MONITORING",
+      "payload": "{\"attempt\":null,\"episode\":{\"baseline_width\":50.0,\"contraction\":0.2,\"created\":1800000003000,\"expires\":1800005403000,\"id\":\"EP_9de0a54d2844fa550965b727\",\"lower\":100.0,\"rotations\":10,\"source_end_ms\":1799999999999,\"source_start_ms\":1799998200000,\"upper\":110.0,\"version\":1,\"width\":10.0},\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":-0.22483025315886507,\"volume_10m_z\":0.44966050631773014,\"volume_5m\":518.0,\"volume_5m_z\":0.6744907594765952,\"volume_z\":-1.011736139214893}}"
+    },
+    {
+      "seq": 121,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":0.22483025315886507,\"volume_10m_z\":1.6187778227438285,\"volume_5m\":520.0,\"volume_5m_z\":1.1241512657943253,\"volume_z\":1.011736139214893}}"
+    },
+    {
+      "seq": 120,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":0.6744907594765952,\"volume_10m_z\":0.770846582258966,\"volume_5m\":515.0,\"volume_5m_z\":0.0,\"volume_z\":0.6744907594765952}}"
+    },
+    {
+      "seq": 119,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":1.1241512657943253,\"volume_10m_z\":0.1927116455647415,\"volume_5m\":510.0,\"volume_5m_z\":-1.1241512657943253,\"volume_z\":0.3372453797382976}}"
+    },
+    {
+      "seq": 118,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":0.0,\"volume_10m_z\":-1.011736139214893,\"volume_5m\":512.0,\"volume_5m_z\":-0.6744907594765952,\"volume_z\":0.0}}"
+    },
+    {
+      "seq": 117,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":-1.1241512657943253,\"volume_10m_z\":-1.3489815189531904,\"volume_5m\":514.0,\"volume_5m_z\":-0.22483025315886507,\"volume_z\":-0.3372453797382976}}"
+    },
+    {
+      "seq": 116,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":-0.6744907594765952,\"volume_10m_z\":-0.5781349366942244,\"volume_5m\":516.0,\"volume_5m_z\":0.22483025315886507,\"volume_z\":-0.6744907594765952}}"
+    },
+    {
+      "seq": 115,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":-0.22483025315886507,\"volume_10m_z\":0.5395926075812761,\"volume_5m\":518.0,\"volume_5m_z\":0.6744907594765952,\"volume_z\":-1.011736139214893}}"
+    },
+    {
+      "seq": 114,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":0.22483025315886507,\"volume_10m_z\":1.6187778227438285,\"volume_5m\":520.0,\"volume_5m_z\":1.1241512657943253,\"volume_z\":1.011736139214893}}"
+    },
+    {
+      "seq": 113,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":0.6744907594765952,\"volume_10m_z\":0.770846582258966,\"volume_5m\":515.0,\"volume_5m_z\":0.0,\"volume_z\":0.6744907594765952}}"
+    },
+    {
+      "seq": 112,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":1.1241512657943253,\"volume_10m_z\":0.1927116455647415,\"volume_5m\":510.0,\"volume_5m_z\":-1.1241512657943253,\"volume_z\":0.3372453797382976}}"
+    },
+    {
+      "seq": 111,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":0.0,\"volume_10m_z\":null,\"volume_5m\":512.0,\"volume_5m_z\":-0.6744907594765952,\"volume_z\":0.0}}"
+    },
+    {
+      "seq": 110,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":-1.1241512657943253,\"volume_10m_z\":null,\"volume_5m\":514.0,\"volume_5m_z\":-0.22483025315886507,\"volume_z\":-0.3372453797382976}}"
+    },
+    {
+      "seq": 109,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":-0.6744907594765952,\"volume_10m_z\":null,\"volume_5m\":516.0,\"volume_5m_z\":0.22483025315886507,\"volume_z\":-0.6744907594765952}}"
+    },
+    {
+      "seq": 108,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":-0.22483025315886507,\"volume_10m_z\":null,\"volume_5m\":518.0,\"volume_5m_z\":0.6744907594765952,\"volume_z\":-1.011736139214893}}"
+    },
+    {
+      "seq": 107,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":0.22483025315886507,\"volume_10m_z\":null,\"volume_5m\":520.0,\"volume_5m_z\":1.1241512657943253,\"volume_z\":1.011736139214893}}"
+    },
+    {
+      "seq": 106,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":0.6744907594765952,\"volume_10m_z\":null,\"volume_5m\":515.0,\"volume_5m_z\":0.0,\"volume_z\":0.6744907594765952}}"
+    },
+    {
+      "seq": 105,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":1.1241512657943253,\"volume_10m_z\":null,\"volume_5m\":510.0,\"volume_5m_z\":-1.1241512657943253,\"volume_z\":0.3372453797382976}}"
+    },
+    {
+      "seq": 104,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":0.0,\"volume_10m_z\":null,\"volume_5m\":512.0,\"volume_5m_z\":-0.6744907594765952,\"volume_z\":0.0}}"
+    },
+    {
+      "seq": 103,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":-1.1241512657943253,\"volume_10m_z\":null,\"volume_5m\":514.0,\"volume_5m_z\":-0.22483025315886507,\"volume_z\":-0.3372453797382976}}"
+    },
+    {
+      "seq": 102,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":-0.6744907594765952,\"volume_10m_z\":null,\"volume_5m\":516.0,\"volume_5m_z\":0.22483025315886507,\"volume_z\":-0.6744907594765952}}"
+    },
+    {
+      "seq": 101,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":-0.22483025315886507,\"volume_10m_z\":null,\"volume_5m\":518.0,\"volume_5m_z\":0.6744907594765952,\"volume_z\":-1.011736139214893}}"
+    },
+    {
+      "seq": 100,
+      "symbol": "TESTUSDT",
+      "action": "WAIT",
+      "reason": "NO_COMPRESSION",
+      "payload": "{\"attempt\":null,\"episode\":null,\"features\":{\"heat_state\":\"NORMAL\",\"oi_growth\":null,\"oi_growth_15m\":null,\"oi_growth_15m_z\":null,\"oi_growth_z\":null,\"oi_impulse_direction\":0,\"oi_retention\":null,\"oi_reversal_fraction\":null,\"prior_oi_growth_z\":null,\"prior_volume_5m_z\":0.22483025315886507,\"volume_10m_z\":null,\"volume_5m\":520.0,\"volume_5m_z\":1.1241512657943253,\"volume_z\":1.011736139214893}}"
+    }
+  ]
+}
+SYNTHETIC DEMO ONLY. These are not observed market profits.

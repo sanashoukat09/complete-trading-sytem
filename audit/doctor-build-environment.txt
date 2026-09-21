@@ -1,0 +1,78 @@
+2026-09-21 16:44:29,655 ERROR Stopped: Cannot connect to host fapi.binance.com:443 ssl:default [Temporary failure in name resolution]
+Traceback (most recent call last):
+  File "/opt/pyvenv/lib/python3.13/site-packages/aiohttp/connector.py", line 1562, in _create_direct_connection
+    hosts = await self._resolve_host(host, port, traces=traces)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/pyvenv/lib/python3.13/site-packages/aiohttp/connector.py", line 1178, in _resolve_host
+    return await asyncio.shield(resolved_host_task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/pyvenv/lib/python3.13/site-packages/aiohttp/connector.py", line 1209, in _resolve_host_with_throttle
+    addrs = await self._resolver.resolve(host, port, family=self._family)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/pyvenv/lib/python3.13/site-packages/aiohttp/resolver.py", line 40, in resolve
+    infos = await self._loop.getaddrinfo(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 939, in getaddrinfo
+    return await self.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, getaddr_func, host, port, family, type, proto, flags)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/usr/lib/python3.13/socket.py", line 977, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -3] Temporary failure in name resolution
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/data/Compression-Radar-6.1.2/radar/__main__.py", line 221, in main
+    asyncio.run(diagnose());return 0
+    ~~~~~~~~~~~^^^^^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/mnt/data/Compression-Radar-6.1.2/radar/__main__.py", line 213, in diagnose
+    await client.open();print('REST server time: OK; adjusted clock offset (ms):',client.offset)
+    ^^^^^^^^^^^^^^^^^^^
+  File "/mnt/data/Compression-Radar-6.1.2/radar/market.py", line 46, in open
+    await self.sync_clock()
+  File "/mnt/data/Compression-Radar-6.1.2/radar/market.py", line 49, in sync_clock
+    before=int(time.time()*1000);server=await self.get('/fapi/v1/time');after=int(time.time()*1000)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/data/Compression-Radar-6.1.2/radar/market.py", line 60, in get
+    async with self.session.get('https://fapi.binance.com'+path,params=params) as r:
+               ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/pyvenv/lib/python3.13/site-packages/aiohttp/client.py", line 1510, in __aenter__
+    self._resp: _RetType = await self._coro
+                           ^^^^^^^^^^^^^^^^
+  File "/opt/pyvenv/lib/python3.13/site-packages/aiohttp/client.py", line 779, in _request
+    resp = await handler(req)
+           ^^^^^^^^^^^^^^^^^^
+  File "/opt/pyvenv/lib/python3.13/site-packages/aiohttp/client.py", line 734, in _connect_and_send_request
+    conn = await self._connector.connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        req, traces=traces, timeout=real_timeout
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/opt/pyvenv/lib/python3.13/site-packages/aiohttp/connector.py", line 672, in connect
+    proto = await self._create_connection(req, traces, timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/pyvenv/lib/python3.13/site-packages/aiohttp/connector.py", line 1239, in _create_connection
+    _, proto = await self._create_direct_connection(req, traces, timeout)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/pyvenv/lib/python3.13/site-packages/aiohttp/connector.py", line 1568, in _create_direct_connection
+    raise ClientConnectorDNSError(req.connection_key, exc) from exc
+aiohttp.client_exceptions.ClientConnectorDNSError: Cannot connect to host fapi.binance.com:443 ssl:default [Temporary failure in name resolution]
+exit_code=1

@@ -1,0 +1,55 @@
+{
+  "source": "complete supplied 6.1 live-run history",
+  "events": 1340389,
+  "decisions": 94603,
+  "positions": 0,
+  "outcomes": 0,
+  "receipt_start_utc": "2026-09-20T18:18:23.440Z",
+  "receipt_end_utc": "2026-09-21T01:04:12.035Z",
+  "event_counts": {
+    "TRADE": 1257115,
+    "TIMER": 37911,
+    "GAP": 22096,
+    "BAR": 18727,
+    "OI": 3299,
+    "HEALTH": 992,
+    "META": 240,
+    "UNIVERSE": 9
+  },
+  "decision_reasons": {
+    "DELAYED_TRADE": 53392,
+    "NO_COMPRESSION": 20843,
+    "GAP_WARMUP": 19193,
+    "BALANCE_MONITORING": 852,
+    "WAIT_BOUNDARY_SWEEP": 222,
+    "FLOW_WARMUP": 59,
+    "WAIT_RECLAIM": 33,
+    "OUTSIDE_ATTEMPT": 7,
+    "BARS_STALE": 2
+  },
+  "internal_processing_delay_ms": {
+    "median": 11084,
+    "p95": 13906,
+    "max_all_events": 6908276,
+    "trade_median": 11074,
+    "trade_p95": 13762,
+    "trade_max": 29297
+  },
+  "trade_exchange_to_receipt_delay_ms": {
+    "median": 533,
+    "p95": 2690,
+    "fraction_over_3000": 0.023243696877373987
+  },
+  "burst": {
+    "max_events_one_received_second": 836,
+    "max_events_any_three_received_seconds": 1675
+  },
+  "historical_quote_depth_events_persisted": false,
+  "v612_counterfactual_diagnostic": {
+    "normalization": "GAP records omitted and receipt timestamps normalized for strategy-path diagnosis only; historical quote/depth not reconstructed",
+    "unique_candidates": 29,
+    "mid_before_structural_stop": 11,
+    "structural_stop_before_mid": 18,
+    "not_executable_trade_results": true
+  }
+}

@@ -1,0 +1,23 @@
+COMPRESSION RADAR 6.1.3 — START HERE
+=====================================
+
+This release reads LIVE PUBLIC Binance USDⓈ-M market data and executes PAPER trades only.
+It cannot place real-money exchange orders and needs no API key.
+
+WINDOWS
+1) Extract this ZIP to a new folder.
+2) Install Python 3.11+ with the `py` launcher.
+3) Double-click run-paper.bat.
+4) The launcher runs a Binance public REST/WebSocket connectivity doctor first.
+5) When it starts, open http://127.0.0.1:8780/
+6) Stop normally with Ctrl+C.
+
+Fresh data directory: data-paper-v613
+Do NOT copy a 6.1 / 6.1.1 / 6.1.2 radar.db into it.
+
+Discovery in 6.1.3 deep-scans up to 160 contracts from a diversified 280-contract quick scan,
+then live-streams up to 24 qualified hot/retained/flush symbols plus structural pins.
+One-window bursts that fully unwind are demoted as DEAD_BURST.
+
+Before relying on a long run, optionally run test-project.bat and the synthetic demo documented in README.md.
+For exact validation evidence and limitations, read RELEASE-REPORT.md.
