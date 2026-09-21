@@ -154,12 +154,10 @@ class Engine:
             # Before an attempt, a one-off burst that fully unwound may release an otherwise
             # passive balance so scarce live streams follow genuinely active auctions.
             f=attention.get('features') or {}
-            ret=f.get('oi_retention') or 0.
-            oi5=f.get('oi_growth_z') or 0.
-            oi15=f.get('oi_growth_15m_z') or 0.
-            v5=f.get('volume_5m_z') or 0.
-            has_oi_backing=(ret>=0.70 and (oi5>=0.5 or oi15>=0.5 or v5>=0.5))
-            active_heat=attention.get('heat_state') not in ('NORMAL','DEAD_BURST') or has_oi_backing
+            g5=abs(f.get('oi_growth') or 0.0);g15=abs(f.get('oi_growth_15m') or 0.0)
+            g_base=abs(f.get('oi_growth_base') or 0.0);v5_z=abs(f.get('volume_5m_z') or 0.0)
+            is_active=(g5>=0.0025 or g15>=0.0025 or g_base>=0.0075 or v5_z>=1.0)
+            active_heat=attention.get('heat_state')!='DEAD_BURST' and (not attention or is_active)
             structural=bool(attempt) or (ep and active_heat)
             if structural and (include_expired or not ep or ep['expires']>now) and (s.get('meta') or {}).get('status')=='TRADING':pins.add(sym)
         return pins

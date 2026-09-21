@@ -52,7 +52,7 @@ def features(s,c=None):
     block10=_block_sums([x['volume'] for x in bars],width*2)
     volume_10m_z=_series_z(block10,-1)
 
-    oi_growth_15m=None;oi_growth_15m_z=None;oi_retention=None;oi_reversal_fraction=None
+    oi_growth_15m=None;oi_growth_15m_z=None;oi_growth_base=None;oi_retention=None;oi_reversal_fraction=None
     oi_impulse_direction=0;prior_oi_growth_z=None
     contiguous=[]
     if oi:
@@ -68,6 +68,8 @@ def features(s,c=None):
             base=contiguous[-4]['value'];current=contiguous[-1]['value']
             if positive(base) and positive(current):
                 oi_growth_15m=math.log(current/base)
+                session_base=contiguous[0]['value']
+                oi_growth_base=math.log(current/session_base) if positive(session_base) else None
                 hist15=[]
                 if len(contiguous)>=14:
                     for i in range(3,len(contiguous)):
@@ -110,7 +112,7 @@ def features(s,c=None):
 
     return dict(volume_z=vol,oi_growth=growth,oi_growth_z=gz,
                 volume_5m=volume_5m,volume_5m_z=volume_5m_z,prior_volume_5m_z=prior_volume_5m_z,
-                volume_10m_z=volume_10m_z,oi_growth_15m=oi_growth_15m,oi_growth_15m_z=oi_growth_15m_z,
+                volume_10m_z=volume_10m_z,oi_growth_15m=oi_growth_15m,oi_growth_15m_z=oi_growth_15m_z,oi_growth_base=oi_growth_base,
                 prior_oi_growth_z=prior_oi_growth_z,oi_retention=oi_retention,
                 oi_reversal_fraction=oi_reversal_fraction,oi_impulse_direction=oi_impulse_direction,
                 heat_state=heat_state)

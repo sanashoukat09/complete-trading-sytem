@@ -68,6 +68,11 @@ def _quick_activity(rows,now,clock_uncertainty_ms):
     score=max(0.,math.log(max(ratio,1e-9)))*1.4+move*35+rng*20
     return dict(score=score,volume_ratio=ratio,move_5m=move,range_5m=rng)
 
+def _is_active_participation(f):
+    g5=abs(f.get('oi_growth') or 0.0);g15=abs(f.get('oi_growth_15m') or 0.0)
+    g_base=abs(f.get('oi_growth_base') or 0.0);v5_z=abs(f.get('volume_5m_z') or 0.0)
+    return (g5>=0.0025 or g15>=0.0025 or g_base>=0.0075 or v5_z>=1.0)
+
 def _heat_score(f):
     state=f.get('heat_state','NORMAL')
     v5=max(0.,f.get('volume_5m_z') or 0.);v10=max(0.,f.get('volume_10m_z') or 0.)
@@ -212,12 +217,11 @@ class Feed:
         for turnover,sym,meta,move,q,quick_score in chosen:
             state=self.engine.state(sym);f=features(state,c);heat=f.get('heat_state','NORMAL');score=_heat_score(f)
             compressed=state['episode'] is not None
-            ret=f.get('oi_retention') or 0.
-            oi5=f.get('oi_growth_z') or 0.
-            oi15=f.get('oi_growth_15m_z') or 0.
-            v5=f.get('volume_5m_z') or 0.
-            has_oi_backing=(ret>=0.70 and (oi5>=0.5 or oi15>=0.5 or v5>=0.5))
-            monitor_eligible=heat not in ('NORMAL','DEAD_BURST') or (compressed and has_oi_backing) or sym in pins
+            is_active=_is_active_participation(f)
+            if compressed:
+                monitor_eligible=is_active and (heat != 'DEAD_BURST')
+            else:
+                monitor_eligible=(heat not in ('NORMAL','DEAD_BURST')) or (sym in pins)
             rankings.append(dict(symbol=sym,score=score,turnover=turnover,features=f,heat_state=heat,
                                  quick=q,quick_score=quick_score,compressed=compressed,
                                  monitor_eligible=monitor_eligible,tradable=meta['status']=='TRADING'))
