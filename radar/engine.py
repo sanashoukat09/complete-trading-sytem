@@ -107,7 +107,18 @@ class Engine:
             if event.kind=='BAR' and event.data.get('close_ms',event.received)>=event.received-self.cfg.clock_uncertainty_ms:continue
             event.validate();prepared.append((event,event.identity(),event.semantic_hash(),pack_event_payload(dumps(asdict(event)))))
         if not prepared:return []
-        if Path(self.path).stat().st_size+sum(p.stat().st_size for p in Path(self.path).parent.glob(Path(self.path).name+'-wal'))>self.cfg.max_disk_mb*1024*1024:
+        db_bytes=Path(self.path).stat().st_size+sum(p.stat().st_size for p in Path(self.path).parent.glob(Path(self.path).name+'-wal'))
+        budget_bytes=self.cfg.max_disk_mb*1024*1024
+        if db_bytes>budget_bytes*0.80:
+            # Auto-prune old applied events before hitting the hard limit.
+            try:
+                cutoff_ms=int(time.time()*1000)-3*86400000  # keep last 3 days
+                with self.transaction():self.db.execute('DELETE FROM events WHERE applied=1 AND at>0 AND at<?',(cutoff_ms,))
+                self.db.execute('PRAGMA wal_checkpoint(PASSIVE)')
+                log.warning('Auto-pruned old events: DB at %.0f%% of budget', db_bytes/budget_bytes*100)
+            except Exception as prune_exc:log.warning('Auto-prune failed (non-fatal): %s', prune_exc)
+        db_bytes=Path(self.path).stat().st_size+sum(p.stat().st_size for p in Path(self.path).parent.glob(Path(self.path).name+'-wal'))
+        if db_bytes>budget_bytes:
             raise OSError('Configured journal disk budget reached; stop and archive the experiment before restarting')
         result=[]
         with self.transaction():

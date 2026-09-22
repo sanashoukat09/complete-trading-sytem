@@ -353,13 +353,21 @@ class Feed:
     async def funding_polls(self):
         while not self.stop.is_set():
             now=self.client.now()
-            for sym in {p['symbol'] for p in self.engine.positions(False) if p['status']=='OPEN' or (p['status']=='CLOSED' and now-p['closed_ms']<86400000)}:
-                funding=await self.client.get('/fapi/v1/fundingRate',symbol=sym,limit=100)
-                for x in funding:
-                    at=int(x['fundingTime']);mark=float(x.get('markPrice') or 0)
-                    if positive(mark):await self.emit(Event('FUNDING',sym,str(at),at,self.client.now(),dict(mark=mark,rate=float(x['fundingRate'])),raw=x))
-                if funding and all(positive(float(x.get('markPrice') or 0)) for x in funding):
-                    received=self.client.now();await self.emit(Event('FUNDING_SYNC',sym,f'{self.session_id}:{received}',received,received,dict(start=min(int(x['fundingTime']) for x in funding),end=received)))
+            try:
+                for sym in {p['symbol'] for p in self.engine.positions(False) if p['status']=='OPEN' or (p['status']=='CLOSED' and now-p['closed_ms']<86400000)}:
+                    try:
+                        funding=await self.client.get('/fapi/v1/fundingRate',symbol=sym,limit=100)
+                        for x in funding:
+                            at=int(x['fundingTime']);mark=float(x.get('markPrice') or 0)
+                            if positive(mark):await self.emit(Event('FUNDING',sym,str(at),at,self.client.now(),dict(mark=mark,rate=float(x['fundingRate'])),raw=x))
+                        if funding and all(positive(float(x.get('markPrice') or 0)) for x in funding):
+                            received=self.client.now();await self.emit(Event('FUNDING_SYNC',sym,f'{self.session_id}:{received}',received,received,dict(start=min(int(x['fundingTime']) for x in funding),end=received)))
+                    except asyncio.CancelledError:raise
+                    except Exception as sym_exc:
+                        log.warning('Funding rate poll error for %s (non-fatal): %s', sym, sym_exc)
+            except asyncio.CancelledError:raise
+            except Exception as exc:
+                log.warning('Funding poll batch error (non-fatal): %s', exc)
             self.health['funding_poll_ms']=self.client.now()
             await asyncio.sleep(60)
 

@@ -1248,40 +1248,25 @@
     }
 
     function enrichOutcomeData(o) {
-      const known = {
-        'P_f3f677b53b86aaf3bb53bccad97a0103': {
-          symbol: 'WIFUSDT', side: 'LONG', kind: 'SPRING', route: 'DEFENDED_RETEST',
-          lower: 0.2546, upper: 0.2583, sweep: 0.2542,
-          entry: 0.25486, exit: 0.25400, stop: 0.25400, tp1: 0.25830,
-          qty: 19619.5, risk: 29.45, dur: '2m 47s'
-        },
-        'P_54eeefa1a56a3b5afa1e9e279c1acdbd': {
-          symbol: 'ZECUSDT', side: 'SHORT', kind: 'UPTHRUST', route: 'DIRECT_FLOW_RESPONSE',
-          lower: 1524.07, upper: 1538.78, sweep: 1539.60,
-          entry: 1538.08, exit: 1539.75, stop: 1539.75, tp1: 1524.07,
-          qty: 5.421, risk: 29.89, dur: '39s'
-        },
-        'P_13c0e45c921bcc4a06b4d73499e3a049': {
-          symbol: '1000PEPEUSDT', side: 'LONG', kind: 'SPRING', route: 'DEFENDED_RETEST',
-          lower: 0.0049191, upper: 0.0049900, sweep: 0.0049131,
-          entry: 0.0049276, exit: 0.0049123, stop: 0.0049123, tp1: 0.0049900,
-          qty: 1079581, risk: 29.85, dur: '24s'
-        }
-      };
-      const k = known[o.position_id] || {};
-      const sym = o.symbol || k.symbol || o.position_id.slice(0, 10);
-      const side = o.direction || k.side || (o.net_r < 0 ? 'LONG' : 'TRADE');
-      const kind = o.kind || k.kind || 'WYCKOFF';
-      const route = o.route || k.route || '';
-      const lower = o.range_lower ?? k.lower;
-      const upper = o.range_upper ?? k.upper;
-      const sweep = o.sweep_price ?? k.sweep;
-      const entry = o.entry_price ?? k.entry;
-      const exit = o.exit_price ?? k.exit;
-      const stop = o.stop ?? k.stop;
-      const tp1 = o.tp1 ?? k.tp1;
-      const qty = o.qty ?? k.qty;
-      const dur = o.duration_s ? (Math.round(o.duration_s) + 's') : (k.dur || '-');
+      const sym = o.symbol || (o.position_id ? o.position_id.slice(0, 10) : 'UNKNOWN');
+      const side = o.direction || o.side || (o.net_r < 0 ? 'LONG' : 'TRADE');
+      const kind = o.kind || 'WYCKOFF';
+      const route = o.route || '';
+      const lower = o.range_lower ?? o.lower;
+      const upper = o.range_upper ?? o.upper;
+      const sweep = o.sweep_price ?? o.sweep;
+      const entry = o.entry_price ?? o.entry;
+      const exit = o.exit_price ?? o.exit;
+      const stop = o.stop ?? o.management_stop;
+      const tp1 = o.tp1;
+      const qty = o.qty ?? o.original_qty;
+      let dur = '-';
+      if (o.duration_s != null) {
+        const totalSec = Math.round(o.duration_s);
+        const m = Math.floor(totalSec / 60);
+        const s = totalSec % 60;
+        dur = m > 0 ? `${m}m ${s}s` : `${s}s`;
+      }
       return {
         ...o,
         symbol: sym,

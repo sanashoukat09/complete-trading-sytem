@@ -169,6 +169,82 @@ def _enrich_status(engine, feed):
         mark=(q['bid'] if p['direction']==1 else q['ask']) if st.get('quote_live') else None
         p['current_price']=mark
         p['unrealized_mark_pnl']=p['direction']*(mark-p['entry_price'])*p['remaining'] if mark is not None and p.get('entry_price') is not None else None
+        ev = p.get('evidence', {})
+        expl = ev.get('explanation', {})
+        p['kind'] = expl.get('kind', 'SPRING' if p.get('direction') == 1 else 'UPTHRUST')
+        p['route'] = expl.get('route', '')
+        p['sweep_price'] = expl.get('excursion')
+        mid = ev.get('mid')
+        far = ev.get('far')
+        direction = p.get('direction')
+        lower, upper = None, None
+        if mid is not None and far is not None:
+            if direction == 1:
+                lower = round(2 * mid - far, 8); upper = round(far, 8)
+            elif direction == -1:
+                lower = round(far, 8); upper = round(2 * mid - far, 8)
+        if lower is None:
+            dec_row = engine.db.execute("SELECT payload FROM decisions WHERE symbol=? AND reason='ATTEMPT_CONSUMED' ORDER BY seq DESC LIMIT 1", (p.get('symbol'),)).fetchone()
+            if dec_row:
+                try:
+                    dec_json = json.loads(dec_row[0])
+                    ep = dec_json.get('episode') or {}
+                    lower, upper = ep.get('lower'), ep.get('upper')
+                except Exception:pass
+        p['range_lower'] = lower
+        p['range_upper'] = upper
+
+    all_pos = engine.positions(False)
+    pos_map = {p['id']: p for p in all_pos}
+    enriched_outcomes = []
+    for o in s.get('outcomes', []):
+        o_copy = dict(o)
+        # Direct DB lookup guarantees we always get full position payload regardless of pos_map
+        pos_row = engine.db.execute('SELECT payload FROM positions WHERE id=?', (o.get('position_id'),)).fetchone()
+        p = json.loads(pos_row[0]) if pos_row else {}
+        o_copy['symbol'] = p.get('symbol', o_copy.get('symbol', 'UNKNOWN'))
+        o_copy['direction'] = 'LONG' if p.get('direction') == 1 else 'SHORT'
+        o_copy['entry_price'] = p.get('entry_price')
+        o_copy['exit_price'] = p.get('management_stop') or p.get('stop')
+        o_copy['stop'] = p.get('stop')
+        o_copy['tp1'] = p.get('tp1')
+        o_copy['qty'] = p.get('original_qty')
+        o_copy['gross'] = p.get('gross', 0.0)
+        o_copy['exit_reason'] = p.get('exit_reason') or o.get('status')
+        o_copy['status'] = p.get('exit_reason') or o.get('status', 'CLOSED')
+        if not o_copy.get('net_r') and o_copy.get('initial_risk'):
+            o_copy['net_r'] = o_copy['net'] / o_copy['initial_risk']
+        o_copy['opened_ms'] = p.get('entry_ms') or p.get('created_ms')
+        dur_s = (o.get('closed_ms', 0) - o_copy['opened_ms']) / 1000.0 if (o.get('closed_ms') and o_copy.get('opened_ms')) else 0
+        o_copy['duration_s'] = dur_s
+        ev = p.get('evidence', {})
+        expl = ev.get('explanation', {})
+        o_copy['kind'] = expl.get('kind', 'SPRING' if p.get('direction') == 1 else 'UPTHRUST')
+        o_copy['route'] = expl.get('route', '')
+        o_copy['sweep_price'] = expl.get('excursion')
+        mid = ev.get('mid')
+        far = ev.get('far')
+        direction = p.get('direction')
+        lower, upper = None, None
+        if mid is not None and far is not None:
+            if direction == 1:
+                lower = round(2 * mid - far, 8); upper = round(far, 8)
+            elif direction == -1:
+                lower = round(far, 8); upper = round(2 * mid - far, 8)
+        if lower is None:
+            dec_row = engine.db.execute("SELECT payload FROM decisions WHERE symbol=? AND reason='ATTEMPT_CONSUMED' ORDER BY seq DESC LIMIT 1", (p.get('symbol'),)).fetchone()
+            if dec_row:
+                try:
+                    dec_json = json.loads(dec_row[0])
+                    ep = dec_json.get('episode') or {}
+                    lower, upper = ep.get('lower'), ep.get('upper')
+                except Exception:pass
+        o_copy['range_lower'] = lower
+        o_copy['range_upper'] = upper
+        enriched_outcomes.append(o_copy)
+    s['outcomes'] = enriched_outcomes
+    s['all_positions'] = engine.positions(False)
+
     for ranked in s.get('universe',{}).get('ranking',[]):
         ranked['compressed']=market_states.get(ranked['symbol'],{}).get('compressed',False)
     s['compressions'] = compressions

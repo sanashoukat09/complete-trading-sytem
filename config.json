@@ -1,6 +1,9 @@
 {
   "mode": "paper",
-  "excluded_symbols": ["BTCUSDT", "ETHUSDT"],
+  "excluded_symbols": [
+    "BTCUSDT",
+    "ETHUSDT"
+  ],
   "initial_equity": 10000,
   "risk_fraction": 0.003,
   "total_risk_fraction": 0.012,
@@ -41,7 +44,7 @@
   "depth_participation": 0.25,
   "require_depth": true,
   "clock_uncertainty_ms": 2000,
-  "max_disk_mb": 10000,
+  "max_disk_mb": 6000,
   "queue_maxsize": 50000,
   "worker_batch_size": 512,
   "reducer_batch_size": 512,
