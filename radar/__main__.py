@@ -9,6 +9,13 @@ from .market import Feed
 from .strategy import features
 from .research import evaluate
 
+# Fix 7: Module-level cache for approaching signals.
+# When the quote goes stale during a brief stream reconnect, the live attempt
+# evidence (sweep happened, reclaim confirmed) is still structurally valid.
+# We cache the last-seen approaching entry per symbol and repopulate from cache
+# for up to 60 seconds, flagging it as data_stale so the dashboard can style it.
+_approaching_cache = {}  # sym -> (timestamp_ms, entry_dict)
+
 HTML='''<!doctype html><html><meta charset="utf-8"><title>Compression Radar</title><style>body{background:#101925;color:#e3eefb;font:16px system-ui;margin:36px}h1{color:#63d9ba}table{border-collapse:collapse;width:100%}td,th{padding:10px;text-align:left;border-bottom:1px solid #314154}pre{white-space:pre-wrap} .note{color:#ffc879}</style><h1>Compression Radar</h1><p class="note">Experimental live-data paper trading. No real orders. Profitability unverified.</p><h2 id="mode"></h2><p id="health"></p><h2>Selected coins</h2><pre id="universe"></pre><h2>Paper positions</h2><pre id="positions"></pre><h2>Recent decisions</h2><table><thead><tr><th>Symbol</th><th>Action</th><th>Reason</th></tr></thead><tbody id="decisions"></tbody></table><h2>Completed paper outcomes</h2><pre id="outcomes"></pre><script>async function refresh(){try{let s=await(await fetch('/status.json')).json();document.getElementById('mode').textContent=s.mode+' | '+s.operational;document.getElementById('health').textContent='Events processed: '+s.processed_events+' | Pending recovery: '+s.pending_events;for(let k of ['universe','positions','outcomes'])document.getElementById(k).textContent=JSON.stringify(s[k],null,2);let b=document.getElementById('decisions');b.replaceChildren();for(let x of s.decisions){let r=document.createElement('tr');for(let k of ['symbol','action','reason']){let t=document.createElement('td');t.textContent=x[k];r.append(t)}b.append(r)}}catch(e){document.getElementById('health').textContent='Status unavailable: '+e}}refresh();setInterval(refresh,3000)</script></html>'''
 
 def get_dashboard_html():
@@ -113,40 +120,46 @@ def _enrich_status(engine, feed):
                     'attempt': att
                 }
                 compressions.append(comp_obj)
-                if att and att.get('stage')!='CONSUMED' and quote_live:
+                if att and att.get('stage')!='CONSUMED':
                     stage = att.get('stage')
                     direction = att.get('direction')
                     kind = 'SPRING' if direction == 1 else 'UPTHRUST'
-                    approaching.append({
+                    entry = {
                         'symbol': sym,
                         'kind': kind,
                         'stage': stage,
                         'extreme': att.get('extreme'),
                         'reclaim_price': att.get('reclaim_price'),
                         'started': att.get('started'),
-                        'urgency': 'CRITICAL' if stage == 'RECLAIMED' else 'HIGH',
+                        'urgency': 'CRITICAL' if stage in ('RECLAIMED','RETEST') else 'HIGH',
                         'detail': f"{kind} in progress: {stage}",
+                        'quote_live': quote_live,
+                        'data_stale': not quote_live,
                         'comp': comp_obj
-                    })
-                elif current_price and dist_lo_pct is not None and dist_hi_pct is not None:
-                    if 0 <= pos_pct <= 20:
-                        approaching.append({
-                            'symbol': sym,
-                            'kind': 'SPRING_WATCH',
-                            'stage': 'NEAR_SUPPORT',
-                            'urgency': 'MEDIUM',
-                            'detail': f"Approaching support ({dist_lo_pct:+.2f}%)",
-                            'comp': comp_obj
-                        })
-                    elif 80 <= pos_pct <= 100:
-                        approaching.append({
-                            'symbol': sym,
-                            'kind': 'UPTHRUST_WATCH',
-                            'stage': 'NEAR_RESISTANCE',
-                            'urgency': 'MEDIUM',
-                            'detail': f"Approaching resistance ({dist_hi_pct:+.2f}%)",
-                            'comp': comp_obj
-                        })
+                    }
+                    # Fix 7: Always cache live attempt entries; serve stale cache on
+                    # quote drops so the signal doesn't flash away on reconnect.
+                    _approaching_cache[sym] = (now, entry)
+                    approaching.append(entry)
+                else:
+                    # No live attempt -- check if recent cached signal is still relevant
+                    cached = _approaching_cache.get(sym)
+                    if cached and now - cached[0] < 60000:
+                        stale_entry = dict(cached[1], data_stale=True, cached_ms=cached[0])
+                        approaching.append(stale_entry)
+                    elif current_price and dist_lo_pct is not None and dist_hi_pct is not None:
+                        if 0 <= pos_pct <= 20:
+                            approaching.append({
+                                'symbol': sym,'kind': 'SPRING_WATCH','stage': 'NEAR_SUPPORT',
+                                'urgency': 'MEDIUM','detail': f"Approaching support ({dist_lo_pct:+.2f}%)",
+                                'quote_live': quote_live,'comp': comp_obj
+                            })
+                        elif 80 <= pos_pct <= 100:
+                            approaching.append({
+                                'symbol': sym,'kind': 'UPTHRUST_WATCH','stage': 'NEAR_RESISTANCE',
+                                'urgency': 'MEDIUM','detail': f"Approaching resistance ({dist_hi_pct:+.2f}%)",
+                                'quote_live': quote_live,'comp': comp_obj
+                            })
     except Exception as exc:
         s['enrichment_error'] = str(exc)
     s['coverage'] = dict(selected=len(feed.selected),fresh_quotes=sum(m['quote_live'] for sym,m in market_states.items() if sym in feed.selected),queue_size=feed.queue.qsize())
@@ -185,8 +198,21 @@ async def live_data(engine,port):
         try:loop.add_signal_handler(sig,feed.stop.set)
         except (NotImplementedError,RuntimeError):pass
     print(f'Mode: {engine.cfg.mode}. Real orders disabled. Dashboard http://127.0.0.1:{port}/',flush=True)
+    # Fix 3d: Schedule daily event pruning to keep DB growth bounded.
+    # Runs in a background thread so it does not block the event loop.
+    async def _daily_prune():
+        while not feed.stop.is_set():
+            await asyncio.sleep(86400)  # every 24h
+            try:
+                await asyncio.to_thread(engine.prune_old_events,7)
+                logging.info('Daily event prune completed.')
+            except Exception as exc:
+                logging.warning('Daily prune error (non-fatal): %s', exc)
+    prune_task=asyncio.create_task(_daily_prune())
     try:await feed.run()
     finally:
+        prune_task.cancel()
+        await asyncio.gather(prune_task,return_exceptions=True)
         if server:server.shutdown();server.server_close()
 
 def readonly(path):
@@ -212,8 +238,8 @@ def main(argv=None):
                 try:
                     await client.open();print('REST server time: OK; adjusted clock offset (ms):',client.offset)
                     info=await client.get('/fapi/v1/exchangeInfo');print('Metadata symbols:',len(info['symbols']))
-                    for suffix in ('bookTicker','depth20@100ms','aggTrade'):
-                        lane='public' if suffix in ('bookTicker','depth20@100ms') else 'market'
+                    for suffix in ('bookTicker','depth20','aggTrade'):
+                        lane='public' if suffix in ('bookTicker','depth20') else 'market'
                         async with client.session.ws_connect(f'wss://fstream.binance.com/{lane}/stream?streams=btcusdt@{suffix}',receive_timeout=10) as ws:
                             raw=await asyncio.wait_for(ws.receive_json(),10);print(lane,suffix,raw.get('data',raw).get('e'),'OK')
                     print('Read-only connectivity passed. This does not verify profitability or an extended soak.')

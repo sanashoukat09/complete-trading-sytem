@@ -126,12 +126,24 @@ def compression(s,now,c):
     pw=statistics.median(widths)
     if w<=0 or pw<=0 or w>pw*c.contraction_ratio:return None
     if abs(recent[-1]['close']-recent[0]['open'])>w*c.max_drift_fraction:return None
+    # Fix 6: Reject micro-compressions too narrow to overcome spread + slippage.
+    # A range of 0.4% on a coin with 0.1% spread and 0.05% slippage gives almost no
+    # structural edge -- the noise floor swallows the entire Spring move.
+    if lo>0 and (w/lo*100)<getattr(c,'min_compression_width_pct',0.6):return None
     # Alternating visits establish balance, rather than one flat directional bar.
     visits=[]
     for bar in recent:
         where=-1 if bar['close']<=lo+.3*w else 1 if bar['close']>=hi-.3*w else 0
         if where and (not visits or visits[-1]!=where):visits.append(where)
     if len(visits)<4:return None
+    # Fix 1b: Only recognise compressions on coins with developing interest.
+    # A coin sitting flat with no OI change is low-volatility, not a coiled spring.
+    # The heat gate is bypassed when the coin already has a live attempt -- re-evaluation
+    # of an existing episode must not evict an in-progress Spring/Upthrust observation.
+    min_heat=getattr(c,'min_compression_heat','COOLING')
+    if min_heat!='ANY' and not s.get('attempt'):
+        feat=features(s,c);heat=feat.get('heat_state','NORMAL')
+        if heat in ('NORMAL','DEAD_BURST'):return None
     return dict(lower=lo,upper=hi,width=w,created=now,expires=now+c.episode_ms,
                 source_start_ms=recent[0]['open_ms'],source_end_ms=recent[-1]['close_ms'],
                 baseline_width=pw,contraction=w/pw,
@@ -210,9 +222,27 @@ def observe(s,e,c):
         if group=='public':
             # A book/quote reconnect removes executable-liquidity certainty but does
             # not erase an otherwise continuous aggTrade auction hypothesis.
-            s.update(quote=None,depth=None,reason='BOOK_GAP_WAIT_LIQUIDITY');return
+            # Fix 9: Preserve last-known quote if it is still fresh enough.
+            # The old unconditional quote=None caused the next confirmed signal to always
+            # fail QUOTE_UNAVAILABLE_OR_STALE, since reconnect takes 1-3s and quotes
+            # need time to re-arrive. We only wipe the quote when it is already stale
+            # (i.e., older than max_quote_age_ms at the time of the gap event).
+            # Preserve last-known quote and depth if still fresh enough.
+            q=s.get('quote');depth=s.get('depth');age_limit=getattr(c,'max_quote_age_ms',8000)
+            if q and now-q.get('received',0)>age_limit:s['quote']=None
+            if depth and now-depth.get('received',0)>age_limit:s['depth']=None
+            s['reason']='BOOK_GAP_WAIT_LIQUIDITY';return
         if group=='market':
-            # Missing aggTrades breaks effort/result and causal response evidence.
+            # Fix 2: Preserve attempts that already passed the OUTSIDE stage.
+            # A 2-second aggTrade reconnect must not erase a reclaimed Spring/Upthrust
+            # that took minutes to develop. We clear flow evidence (now untrustworthy)
+            # but keep the structural fact that the sweep occurred and price returned
+            # inside the balance. Only wipe the attempt if still in OUTSIDE phase
+            # (no reclaim confirmed yet), since response evidence has no basis then.
+            _existing=s.get('attempt')
+            if _existing and _existing.get('stage') not in (None,'OUTSIDE'):
+                _existing['response']=[];_existing.pop('retest_response',None)
+                s.update(trades=[],last_trade_id=None,warm_trades=0,reason='TRADE_GAP_WARMUP');return
             s.update(trades=[],attempt=None,last_trade_id=None,warm_trades=0,reason='TRADE_GAP_WARMUP');return
         # Clock/unknown gaps can invalidate ordering across capabilities; reset all.
         s.update(quote=None,depth=None,trades=[],attempt=None,last_trade_id=None,warm_trades=0,reason='GAP_WARMUP');return
@@ -254,6 +284,13 @@ def observe(s,e,c):
     if not meta:s['reason']='METADATA_UNAVAILABLE';return
     if s['warm_trades']<20:s['reason']='FLOW_WARMUP';return
     if not s['bars'] or now-s['bars'][-1]['close_ms']>120000:s['reason']='BARS_STALE';return
+    # Fix 1c: Gate new outside attempts on coins with developing OI/volume interest.
+    # Once a sweep is already in progress (attempt exists), do not abort mid-sequence
+    # due to a single quiet OI poll window -- the structural auction hypothesis stands.
+    min_entry_heat=getattr(c,'min_entry_heat','COOLING')
+    if min_entry_heat!='ANY' and a is None:
+        _feat=features(s,c);_heat=_feat.get('heat_state','NORMAL')
+        if _heat in ('NORMAL','DEAD_BURST'):s['reason']='COMPRESSION_HEAT_INSUFFICIENT';return
     noise=max(meta['tick_size']*c.min_net_move_ticks,ep['width']*.01)
     boundary=ep['lower'] if (a or {}).get('direction',1)==1 else ep['upper']
     if a is None:
@@ -274,8 +311,12 @@ def observe(s,e,c):
                 response=[],best_progress=0.,lost_since=None,lost_count=0,retest_extreme=None,baseline_rate=baseline_rate,quality=None)
         return
     direction=a['direction'];boundary=ep['lower'] if direction==1 else ep['upper']
-    # A move a full balance-width beyond the frozen boundary is no longer a failed auction.
-    if (direction==1 and p<ep['lower']-ep['width']) or (direction==-1 and p>ep['upper']+ep['width']):
+    # Fix 4: Use configurable tolerance for excursion invalidation (default 1.5x width).
+    # A Spring commonly wicks 1.0-1.5x below the balance before snapping back sharply.
+    # The original 1x limit invalidated many legitimate Springs on the wick extreme.
+    # At 1.5x we still correctly reject genuine breakouts (2x+ moves past the boundary).
+    _exc_tol=getattr(c,'excursion_tolerance',1.5)*ep['width']
+    if (direction==1 and p<ep['lower']-_exc_tol) or (direction==-1 and p>ep['upper']+_exc_tol):
         s['attempt']=None;s['reason']='EXCESSIVE_EXCURSION';return
     if a['stage']=='OUTSIDE':
         old=a['extreme'];a['extreme']=min(old,p) if direction==1 else max(old,p)
@@ -321,11 +362,18 @@ def observe(s,e,c):
     # keep chasing the same confirmation. Preserve the valid auction hypothesis and
     # wait for a defended revisit that improves price without accepting outside.
     if a.get('entry_mode')=='RETEST_ONLY' and a['stage']!='RETEST':
-        retest_zone=max(noise,ep['width']*.05)
-        if a['best_progress']>=small and inside_progress<=retest_zone:
-            a['retest_started']=now;a['retest_extreme']=p;a['retest_response']=[];a['stage']='RETEST'
-            s['reason']='WAIT_RETEST_DEFENSE';return
-        s['reason']='WAIT_BETTER_ENTRY_RETEST';return
+        # Fix 5c: Time-pressure escape -- if >60% of attempt window has elapsed,
+        # lift the RETEST_ONLY constraint. The original RR rejection may be stale
+        # (price has improved since). Fall through to the direct-response check.
+        if now-a['started']>c.attempt_ms*0.6:
+            a.pop('entry_mode',None)  # allow direct-response below
+        else:
+            # Fix 5a: Config-driven retest zone (default 8% vs old hardcoded 5%).
+            retest_zone=max(noise,ep['width']*getattr(c,'retest_zone_fraction',0.08))
+            if a['best_progress']>=small and inside_progress<=retest_zone:
+                a['retest_started']=now;a['retest_extreme']=p;a['retest_response']=[];a['stage']='RETEST'
+                s['reason']='WAIT_RETEST_DEFENSE';return
+            s['reason']='WAIT_BETTER_ENTRY_RETEST';return
 
     # A retest is a distinct entry route. Once it starts, renewed progress must be
     # measured from the retest extreme rather than falling back into direct-response
@@ -336,7 +384,10 @@ def observe(s,e,c):
         rext=a['retest_extreme'];renewed=_signed_progress(direction,p,rext)
         rflow=_flow_stats(a['retest_response'],direction)
         retest_need=max(noise,ep['width']*.03)
-        if len(a['retest_response'])>=c.min_response_trades and renewed>=retest_need and rflow['favorable_share']>=max(.45,c.aggression_fraction-.10):
+        # Fix 5b: Lower retest flow requirement -- retests are inherently quieter than
+        # direct response. Slightly less buying pressure in a controlled pullback is
+        # expected information, not a disqualifying signal.
+        if len(a['retest_response'])>=c.min_response_trades and renewed>=retest_need and rflow['favorable_share']>=max(.40,c.aggression_fraction-.15):
             s['reason']='ENTRY_RETEST_CONFIRMED'
             return _candidate(s,a,ep,p,noise,'DEFENDED_RETEST',a['retest_response'],rext)
         s['reason']='WAIT_RETEST_DEFENSE';return
@@ -353,7 +404,8 @@ def observe(s,e,c):
         return _candidate(s,a,ep,p,noise,route,response,reference)
     # Once there has been genuine response, a controlled revisit is information rather
     # than automatic failure. Keep it inside the original Spring/Upthrust hypothesis.
-    retest_zone=max(noise,ep['width']*.05)
+    # Fix 5a: Config-driven retest zone applied to both RETEST_ONLY and organic retest paths.
+    retest_zone=max(noise,ep['width']*getattr(c,'retest_zone_fraction',0.08))
     if a['best_progress']>=small and inside_progress<=retest_zone:
         if a.get('retest_started') is None:
             a['retest_started']=now;a['retest_extreme']=p;a['retest_response']=[]

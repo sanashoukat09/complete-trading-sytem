@@ -86,10 +86,13 @@ class PublicClient:
         await self.sync_clock()
         return self
     async def sync_clock(self):
-        before=int(time.time()*1000);server=await self.get('/fapi/v1/time');after=int(time.time()*1000)
-        if after-before>4000:raise RuntimeError('Exchange clock synchronization uncertainty too high')
-        self.offset=int(server['serverTime'])-(before+after)//2
-        return dict(offset_ms=self.offset,uncertainty_ms=(after-before)/2,synced_ms=self.now())
+        for attempt in range(3):
+            before=int(time.time()*1000);server=await self.get('/fapi/v1/time');after=int(time.time()*1000)
+            if after-before<=4000:
+                self.offset=int(server['serverTime'])-(before+after)//2
+                return dict(offset_ms=self.offset,uncertainty_ms=(after-before)/2,synced_ms=self.now())
+            if attempt<2:await asyncio.sleep(1)
+        raise RuntimeError('Exchange clock synchronization uncertainty too high')
     async def close(self):
         if self.session:await self.session.close()
     async def get(self,path,**params):
@@ -250,7 +253,7 @@ class Feed:
         self.selected=sorted(desired);self.stream_tasks=list(self._subscriptions.values())
 
     def _stream_names(self,group,symbols):
-        suffixes=('bookTicker','depth20@100ms') if group=='public' else ('aggTrade',)
+        suffixes=('bookTicker','depth20') if group=='public' else ('aggTrade',)
         return [sym.lower()+'@'+suffix for sym in sorted(symbols) for suffix in suffixes]
 
     async def _control(self,ws,method,params):
@@ -273,7 +276,7 @@ class Feed:
 
     async def stream(self,group,symbols=None):
         import aiohttp
-        attempts=0;stale={}
+        attempts=0;stale_count=0;stale_last_ms=0
         while not self.stop.is_set():
             try:
                 desired=set(symbols or self._desired[group])
@@ -283,8 +286,8 @@ class Feed:
                 # Use a persistent raw-stream socket and venue-supported live
                 # SUBSCRIBE/UNSUBSCRIBE messages. normalize() accepts raw or combined.
                 url='wss://fstream.binance.com/public/ws' if group=='public' else 'wss://fstream.binance.com/market/ws'
-                async with self.client.session.ws_connect(url,heartbeat=20,receive_timeout=45) as ws:
-                    attempts=0;self._sockets[group]=ws
+                async with self.client.session.ws_connect(url,autoping=True,receive_timeout=60) as ws:
+                    attempts=0;stale_streak_start=0;self._sockets[group]=ws
                     desired=set(symbols or self._desired[group])
                     await self._control(ws,'SUBSCRIBE',self._stream_names(group,desired));self._subscribed[group]=set(desired)
                     async for msg in ws:
@@ -294,12 +297,20 @@ class Feed:
                                 lag=received-event.at
                                 self.health.setdefault('symbols',{}).setdefault(event.symbol,{})[event.kind]=dict(received_ms=received,event_ms=event.at,lag_ms=lag)
                                 await self.emit(event)
-                                # A growing socket backlog is not live coverage. Reconnect, preserve gap evidence.
-                                stale[event.symbol]=stale.get(event.symbol,0)+1 if lag>self.engine.cfg.max_exchange_lag_ms else 0
-                                if stale[event.symbol]>=3:raise ConnectionError('STALE_STREAM_BACKLOG')
+                                # Socket-level sustained lag guard:
+                                # When draining a TCP burst after momentary jitter, hundreds of queued frames
+                                # arrive in <100ms with lag > max_lag. Draining them is completely normal.
+                                # Only raise STALE_STREAM_BACKLOG if the stream has been continuously stale
+                                # for > 20 seconds of wall-clock time without seeing any fresh frame.
+                                if lag<=self.engine.cfg.max_exchange_lag_ms:
+                                    stale_streak_start=0
+                                else:
+                                    if not stale_streak_start:stale_streak_start=received
+                                    if received-stale_streak_start>20000:
+                                        raise ConnectionError('STALE_STREAM_BACKLOG')
                             self.health[group+'_received_ms']=received
-                        elif msg.type in (aiohttp.WSMsgType.CLOSED,aiohttp.WSMsgType.ERROR):break
-                raise ConnectionError('Stream ended')
+                        elif msg.type in (aiohttp.WSMsgType.CLOSED,aiohttp.WSMsgType.ERROR,aiohttp.WSMsgType.CLOSE):break
+                raise ConnectionError(f'Stream ended (code={ws.close_code}, exc={ws.exception()})')
             except asyncio.CancelledError:raise
             except Exception as exc:
                 attempts+=1;log.warning('%s feed: %s',group,exc);self.health[group+'_error']=str(exc)
@@ -327,12 +338,16 @@ class Feed:
 
     async def clock_polls(self):
         while not self.stop.is_set():
-            old=self.client.offset
-            sample=await self.client.sync_clock();self.health['clock']=sample
-            if abs(self.client.offset-old)>self.engine.cfg.clock_uncertainty_ms:
-                for sym in list(self.selected):
-                    now=self.client.now();self.counter+=1
-                    await self.emit(Event('GAP',sym,f'{self.session_id}:clock:{self.counter}',now,now,dict(reason='CLOCK_OFFSET_CHANGED')))
+            try:
+                old=self.client.offset
+                sample=await self.client.sync_clock();self.health['clock']=sample
+                if abs(self.client.offset-old)>self.engine.cfg.clock_uncertainty_ms:
+                    for sym in list(self.selected):
+                        now=self.client.now();self.counter+=1
+                        await self.emit(Event('GAP',sym,f'{self.session_id}:clock:{self.counter}',now,now,dict(reason='CLOCK_OFFSET_CHANGED')))
+            except asyncio.CancelledError:raise
+            except Exception as exc:
+                log.warning('Clock poll error (will retry next interval): %s', exc)
             await asyncio.sleep(300)
 
     async def funding_polls(self):

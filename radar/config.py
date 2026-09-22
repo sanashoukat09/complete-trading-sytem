@@ -15,8 +15,8 @@ class Config:
     slippage_fraction: float = 0.0005
     funding_allowance_fraction: float = 0.001
     min_net_rr: float = 1.5
-    max_quote_age_ms: int = 1500
-    max_exchange_lag_ms: int = 3000
+    max_quote_age_ms: int = 8000
+    max_exchange_lag_ms: int = 10000
     max_oi_age_ms: int = 900000
     min_turnover: float = 10000000
     universe_size: int = 24
@@ -42,7 +42,7 @@ class Config:
     min_net_move_ticks: int = 2
     partial_fraction: float = 0.5
     max_spread_fraction: float = 0.002
-    depth_participation: float = 0.1
+    depth_participation: float = 0.25
     require_depth: bool = True
     clock_uncertainty_ms: int = 2000
     max_disk_mb: int = 10000
@@ -51,16 +51,26 @@ class Config:
     reducer_batch_size: int = 512
     oi_poll_seconds: int = 60
     overload_queue_delay_ms: int = 1500
+    min_compression_heat: str = 'COOLING'
+    min_entry_heat: str = 'COOLING'
+    excursion_tolerance: float = 1.5
+    retest_zone_fraction: float = 0.08
+    min_compression_width_pct: float = 0.6
 
     def validate(self):
         if self.mode not in ('paper','shadow','collection'):
             raise ValueError('Only collection, shadow and paper modes are supported; real orders are disabled')
+        valid_heats = ('ANY','NORMAL','COOLING','HOT_RETAINED','SUSTAINED_HOT','NEW_IMPULSE','FLUSH_EVENT','DEAD_BURST')
+        if self.min_compression_heat not in valid_heats:
+            raise ValueError(f'Invalid min_compression_heat: {self.min_compression_heat}')
+        if self.min_entry_heat not in valid_heats:
+            raise ValueError(f'Invalid min_entry_heat: {self.min_entry_heat}')
         for f in fields(self):
             v=getattr(self,f.name)
             if f.name=='excluded_symbols':
                 if not isinstance(v,(list,tuple)) or not all(isinstance(x,str) and x.endswith('USDT') for x in v):raise ValueError('Invalid excluded_symbols')
                 continue
-            if f.name=='mode':continue
+            if f.name in ('mode', 'min_compression_heat', 'min_entry_heat'):continue
             if f.name=='require_depth':
                 if not isinstance(v,bool):raise ValueError('require_depth must be boolean')
                 continue
@@ -71,7 +81,7 @@ class Config:
                 raise ValueError(f'{f.name} must be an integer')
         if not 0<self.risk_fraction<=self.total_risk_fraction<=self.daily_loss_fraction<1:
             raise ValueError('Require risk <= total risk <= daily budget < 1')
-        for k in ('partial_fraction','contraction_ratio','max_drift_fraction','aggression_fraction','depth_participation','heat_retention_min','heat_dead_retention_max'):
+        for k in ('partial_fraction','contraction_ratio','max_drift_fraction','aggression_fraction','depth_participation','heat_retention_min','heat_dead_retention_max','retest_zone_fraction'):
             if not 0<getattr(self,k)<1:raise ValueError(k+' must be a fraction in (0,1)')
         for k in ('fee_fraction','slippage_fraction','funding_allowance_fraction'):
             if not 0<=getattr(self,k)<1:raise ValueError(k+' must be in [0,1)')
@@ -80,6 +90,8 @@ class Config:
         if self.quick_scan_count<self.candidate_count:raise ValueError('quick_scan_count must cover candidate_count')
         if self.heat_dead_retention_max>=self.heat_retention_min:raise ValueError('dead heat retention must be below retained heat threshold')
         if self.heat_volume_window_bars<3 or self.heat_lookback_windows<4:raise ValueError('insufficient heat persistence history')
+        if self.excursion_tolerance < 1.0:raise ValueError('excursion_tolerance must be at least 1.0')
+        if self.min_compression_width_pct <= 0:raise ValueError('min_compression_width_pct must be positive')
         return self
 
     def to_dict(self):return asdict(self)

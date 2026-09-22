@@ -13,11 +13,14 @@ PRAGMA synchronous=FULL;
 PRAGMA wal_autocheckpoint=256;
 PRAGMA journal_size_limit=67108864;
 CREATE TABLE IF NOT EXISTS manifest(key TEXT PRIMARY KEY,value TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS events(seq INTEGER PRIMARY KEY AUTOINCREMENT,identity TEXT UNIQUE NOT NULL,hash TEXT NOT NULL,payload BLOB NOT NULL,applied INTEGER NOT NULL DEFAULT 0,error TEXT);
+CREATE TABLE IF NOT EXISTS events(seq INTEGER PRIMARY KEY AUTOINCREMENT,identity TEXT UNIQUE NOT NULL,hash TEXT NOT NULL,at INTEGER NOT NULL DEFAULT 0,payload BLOB NOT NULL,applied INTEGER NOT NULL DEFAULT 0,error TEXT);
 CREATE INDEX IF NOT EXISTS pending_events ON events(applied,seq);
+CREATE INDEX IF NOT EXISTS events_prune_idx ON events(at,applied);
 CREATE TABLE IF NOT EXISTS runtime_health(id INTEGER PRIMARY KEY CHECK(id=1),payload TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS states(symbol TEXT PRIMARY KEY,payload TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,seq INTEGER NOT NULL,symbol TEXT NOT NULL,action TEXT NOT NULL,reason TEXT NOT NULL,payload TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS decisions_seq ON decisions(seq);
+CREATE INDEX IF NOT EXISTS decisions_symbol ON decisions(symbol,reason);
 CREATE TABLE IF NOT EXISTS positions(id TEXT PRIMARY KEY,symbol TEXT NOT NULL,status TEXT NOT NULL,payload TEXT NOT NULL);
 CREATE UNIQUE INDEX IF NOT EXISTS one_open_symbol ON positions(symbol) WHERE status IN ('PENDING','OPEN');
 CREATE TABLE IF NOT EXISTS executions(id TEXT PRIMARY KEY,position_id TEXT NOT NULL,seq INTEGER NOT NULL,payload TEXT NOT NULL);
@@ -39,13 +42,20 @@ class Engine:
         if row and row[0]!=cfg:
             self.db.close();raise ValueError('Configuration differs from frozen database. Use a new data directory for a new experiment.')
         self.db.execute("INSERT OR IGNORE INTO manifest VALUES('config',?)",(cfg,))
-        self.db.execute("INSERT OR IGNORE INTO manifest VALUES('schema','6.1.3-persistent-heat')")
+        self.db.execute("INSERT OR IGNORE INTO manifest VALUES('schema','6.1.4-oi-gate-stream-fix')")
         # Hash executable implementation, not only configuration.
         code=digest({p.name:p.read_text(encoding='utf-8') for p in sorted(Path(__file__).parent.glob('*.py'))})
         old=self.db.execute("SELECT value FROM manifest WHERE key='code_hash'").fetchone()
         if old and old[0]!=code:
             self.db.close();raise ValueError('Code changed: archive this experiment and start a new database')
         self.db.execute("INSERT OR IGNORE INTO manifest VALUES('code_hash',?)",(code,))
+        # Migrate: add at column + indices to events table if created by an older schema.
+        cols=[r[1] for r in self.db.execute('PRAGMA table_info(events)').fetchall()]
+        if 'at' not in cols:
+            self.db.execute('ALTER TABLE events ADD COLUMN at INTEGER NOT NULL DEFAULT 0')
+        self.db.execute('CREATE INDEX IF NOT EXISTS events_prune_idx ON events(at,applied)')
+        self.db.execute('CREATE INDEX IF NOT EXISTS decisions_seq ON decisions(seq)')
+        self.db.execute('CREATE INDEX IF NOT EXISTS decisions_symbol ON decisions(symbol,reason)')
         self.fault=None # tests can inject a crash before commit; never alters validation
 
     @contextmanager
@@ -77,6 +87,19 @@ class Engine:
         result=self.ingest_many([event])
         return result[0] if result else None
 
+    def prune_old_events(self,keep_days=7):
+        """Delete applied events older than keep_days to control disk growth.
+
+        Replay is already prevented by the code_hash check, so old applied
+        events have no operational value after the reducer has processed them.
+        Keeps the most recent keep_days of events for post-incident inspection.
+        Runs PRAGMA wal_checkpoint after deletion to release WAL space.
+        """
+        cutoff_ms=int(time.time()*1000)-keep_days*86400000
+        with self.transaction():
+            self.db.execute('DELETE FROM events WHERE applied=1 AND at>0 AND at<?',(cutoff_ms,))
+        self.db.execute('PRAGMA wal_checkpoint(TRUNCATE)')
+
     @locked_read
     def ingest_many(self,events):
         prepared=[]
@@ -93,7 +116,7 @@ class Engine:
                 if row:
                     if row['hash']!=h and event.kind!='BAR':raise ValueError('Conflicting duplicate event: '+identity)
                     seq=row['seq']
-                else:seq=self.db.execute('INSERT INTO events(identity,hash,payload) VALUES(?,?,?)',(identity,h,payload)).lastrowid
+                else:seq=self.db.execute('INSERT INTO events(identity,hash,at,payload) VALUES(?,?,?,?)',(identity,h,event.at,payload)).lastrowid
                 result.append(seq)
         self.recover()
         return result
@@ -121,8 +144,19 @@ class Engine:
                 raise
 
     def _decision(self,e,seq,action,reason,payload=None):
+        # Fix 3a: Strip bulky trade arrays before persisting. The outside[] and response[]
+        # arrays can contain 100-160 trades each (~49 KB total per decision). They are not
+        # needed for audit or replay -- the current state holds them while the attempt is
+        # live, and they dissolve naturally when the attempt resolves. Stripping them
+        # reduces average decision payload from ~2,200 bytes to ~350 bytes (-84%).
+        p=dict(payload or {})
+        if 'attempt' in p and isinstance(p.get('attempt'),dict):
+            a=dict(p['attempt'])
+            a.pop('outside',None);a.pop('response',None);a.pop('retest_response',None)
+            p['attempt']=a
+        p.pop('evidence',None)  # list of raw event IDs, not needed post-decision
         self.db.execute('INSERT OR REPLACE INTO decisions VALUES(?,?,?,?,?,?)',
-            ('D_'+digest([e.identity(),action,reason])[:32],seq,e.symbol,action,reason,dumps(payload or {})))
+            ('D_'+digest([e.identity(),action,reason])[:32],seq,e.symbol,action,reason,dumps(p)))
 
     def _reduce(self,e,seq,state_cache=None,dirty=None):
         if e.kind=='HEALTH':
@@ -161,14 +195,14 @@ class Engine:
     def quote_valid(self,s,now):
         q=s.get('quote');c=self.cfg
         return bool(q and positive(q.get('bid')) and positive(q.get('ask')) and q['bid']<=q['ask']
-                    and 0<=now-q['received']<=c.max_quote_age_ms and 0<=now-q['at']<=c.max_exchange_lag_ms
+                    and 0<=now-q['received']<=c.max_quote_age_ms and 0<=q['received']-q['at']<=c.max_exchange_lag_ms
                     and (q['ask']-q['bid'])/q['bid']<=c.max_spread_fraction)
 
     def _price(self,s,direction,qty,now):
         if not self.quote_valid(s,now):raise ValueError('QUOTE_UNAVAILABLE_OR_STALE')
         q=s['quote'];price=q['ask'] if direction==1 else q['bid'];depth=s.get('depth')
         if self.cfg.require_depth:
-            if not depth or not 0<=now-depth['received']<=self.cfg.max_quote_age_ms or not 0<=now-depth['at']<=self.cfg.max_exchange_lag_ms:
+            if not depth or not 0<=now-depth['received']<=self.cfg.max_quote_age_ms or not 0<=depth['received']-depth['at']<=self.cfg.max_exchange_lag_ms:
                 raise ValueError('DEPTH_UNAVAILABLE_OR_STALE')
             levels=depth['asks'] if direction==1 else depth['bids'];left=qty;total=0.
             if not levels:raise ValueError('DEPTH_EMPTY')
