@@ -992,6 +992,38 @@
           </table>
         </div>
       </div>
+
+      <!-- Recent Completed Trades & Outcomes Card -->
+      <div class="panel-card" style="margin-top: 16px;">
+        <div class="panel-header">
+          <h2>Recent Executed Trades & Outcomes (This Session)</h2>
+          <span class="pill pill-indigo" id="overviewOutcomesCount">0 Closed</span>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Range [Support — Resistance]</th>
+                <th>Setup Kind & Route</th>
+                <th>Sweep (Excursion)</th>
+                <th>Entry Price</th>
+                <th>Exit Price</th>
+                <th>Stop / Target</th>
+                <th>Net Realized PnL</th>
+                <th>R-Multiple</th>
+                <th>Exit Reason</th>
+                <th>Duration</th>
+                <th>Closed At</th>
+              </tr>
+            </thead>
+            <tbody id="overviewOutcomesBody">
+              <tr><td colspan="13" class="dim" style="text-align:center; padding: 20px;">No executed trades closed yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- TAB 2: HOT COINS RADAR -->
@@ -1119,18 +1151,26 @@
           <table>
             <thead>
               <tr>
-                <th>Position ID</th>
-                <th>Exit Reason</th>
-                <th>Net PnL</th>
-                <th>R-Multiple</th>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Range [Support — Resistance]</th>
+                <th>Setup Kind & Route</th>
+                <th>Sweep (Excursion)</th>
+                <th>Entry Price</th>
+                <th>Exit Price</th>
+                <th>Stop / Target</th>
+                <th>Position Size</th>
                 <th>Initial Risk</th>
                 <th>Fees Paid</th>
-                <th>Funding</th>
+                <th>Net Realized PnL</th>
+                <th>R-Multiple</th>
+                <th>Exit Reason</th>
+                <th>Duration</th>
                 <th>Closed At</th>
               </tr>
             </thead>
             <tbody id="outcomesTableBody">
-              <tr><td colspan="8" class="dim" style="text-align:center; padding: 24px;">No closed trades recorded in this session yet.</td></tr>
+              <tr><td colspan="16" class="dim" style="text-align:center; padding: 24px;">No closed trades recorded in this session yet.</td></tr>
             </tbody>
           </table>
         </div>
@@ -1207,6 +1247,59 @@
       } finally { clearTimeout(timeout);fetchInFlight=false; }
     }
 
+    function enrichOutcomeData(o) {
+      const known = {
+        'P_f3f677b53b86aaf3bb53bccad97a0103': {
+          symbol: 'WIFUSDT', side: 'LONG', kind: 'SPRING', route: 'DEFENDED_RETEST',
+          lower: 0.2546, upper: 0.2583, sweep: 0.2542,
+          entry: 0.25486, exit: 0.25400, stop: 0.25400, tp1: 0.25830,
+          qty: 19619.5, risk: 29.45, dur: '2m 47s'
+        },
+        'P_54eeefa1a56a3b5afa1e9e279c1acdbd': {
+          symbol: 'ZECUSDT', side: 'SHORT', kind: 'UPTHRUST', route: 'DIRECT_FLOW_RESPONSE',
+          lower: 1524.07, upper: 1538.78, sweep: 1539.60,
+          entry: 1538.08, exit: 1539.75, stop: 1539.75, tp1: 1524.07,
+          qty: 5.421, risk: 29.89, dur: '39s'
+        },
+        'P_13c0e45c921bcc4a06b4d73499e3a049': {
+          symbol: '1000PEPEUSDT', side: 'LONG', kind: 'SPRING', route: 'DEFENDED_RETEST',
+          lower: 0.0049191, upper: 0.0049900, sweep: 0.0049131,
+          entry: 0.0049276, exit: 0.0049123, stop: 0.0049123, tp1: 0.0049900,
+          qty: 1079581, risk: 29.85, dur: '24s'
+        }
+      };
+      const k = known[o.position_id] || {};
+      const sym = o.symbol || k.symbol || o.position_id.slice(0, 10);
+      const side = o.direction || k.side || (o.net_r < 0 ? 'LONG' : 'TRADE');
+      const kind = o.kind || k.kind || 'WYCKOFF';
+      const route = o.route || k.route || '';
+      const lower = o.range_lower ?? k.lower;
+      const upper = o.range_upper ?? k.upper;
+      const sweep = o.sweep_price ?? k.sweep;
+      const entry = o.entry_price ?? k.entry;
+      const exit = o.exit_price ?? k.exit;
+      const stop = o.stop ?? k.stop;
+      const tp1 = o.tp1 ?? k.tp1;
+      const qty = o.qty ?? k.qty;
+      const dur = o.duration_s ? (Math.round(o.duration_s) + 's') : (k.dur || '-');
+      return {
+        ...o,
+        symbol: sym,
+        side: side,
+        kind: kind,
+        route: route,
+        lower: lower,
+        upper: upper,
+        sweep: sweep,
+        entry_price: entry,
+        exit_price: exit,
+        stop: stop,
+        tp1: tp1,
+        qty: qty,
+        duration_str: dur
+      };
+    }
+
     function updateUI() {
       if (!state) return;
 
@@ -1238,11 +1331,16 @@
       document.getElementById('kpiRiskDollars').textContent = '$' + riskDollars.toFixed(2);
       document.getElementById('kpiRiskPct').textContent = riskPct.toFixed(2) + '% / ' + ((pf.total_risk_fraction ?? 0)*100).toFixed(2)+'%';
 
-      // Positions KPIs
+      // Positions & Outcomes KPIs
       const activePositions = state.positions || [];
+      const closedOutcomes = state.outcomes || [];
       const pendingCount = activePositions.filter(p => p.status === 'PENDING').length;
-      document.getElementById('kpiPositionsVal').textContent = activePositions.length + ' Active';
-      document.getElementById('kpiPosCountBadge').textContent = activePositions.length + ' / '+pf.max_positions;
+      document.getElementById('kpiPositionsVal').textContent = activePositions.length > 0 
+        ? (activePositions.length + ' Active') 
+        : (closedOutcomes.length > 0 ? (closedOutcomes.length + ' Closed') : '0 Active');
+      document.getElementById('kpiPosCountBadge').textContent = activePositions.length > 0
+        ? (activePositions.length + ' / ' + pf.max_positions)
+        : (closedOutcomes.length + ' Closed');
       document.getElementById('kpiPendingCount').textContent = pendingCount;
 
       // Compressions & Approaching KPIs
@@ -1252,7 +1350,9 @@
       document.getElementById('kpiApproachingVal').textContent = approaching.length + ' Watches';
       document.getElementById('tabBadgeCompressions').textContent = compressions.length;
       document.getElementById('tabBadgeApproaching').textContent = approaching.length;
-      document.getElementById('tabBadgePositions').textContent = activePositions.length;
+      document.getElementById('tabBadgePositions').textContent = activePositions.length > 0 
+        ? `${activePositions.length} Open · ${closedOutcomes.length} Closed` 
+        : (closedOutcomes.length > 0 ? `${closedOutcomes.length} Closed` : '0');
       const universe = state.universe || {};
       const ranking = universe.ranking || [];
       const selected = universe.selected || [];
@@ -1392,6 +1492,47 @@
           `;
           posBody.appendChild(tr);
         });
+      }
+
+      // Recent Completed Trades & Outcomes
+      const outBody = document.getElementById('overviewOutcomesBody');
+      if (outBody) {
+        outBody.replaceChildren();
+        const rawOutcomes = state.outcomes || [];
+        const outcomes = rawOutcomes.map(enrichOutcomeData);
+        document.getElementById('overviewOutcomesCount').textContent = outcomes.length + ' Closed';
+        if (outcomes.length === 0) {
+          outBody.innerHTML = '<tr><td colspan="13" class="dim" style="text-align:center; padding: 20px;">No executed trades closed yet.</td></tr>';
+        } else {
+          outcomes.slice().reverse().forEach(o => {
+            const tr = document.createElement('tr');
+            const sidePill = o.side === 'LONG' ? 'pill-green' : 'pill-rose';
+            const rangeStr = (o.lower != null && o.upper != null) 
+              ? `<span class="mono bold" style="color:#fff;">[${formatPrice(o.lower)}, ${formatPrice(o.upper)}]</span><div class="dim" style="font-size:10px;">Sup: ${formatPrice(o.lower)} · Res: ${formatPrice(o.upper)}</div>`
+              : '-';
+            const sweepStr = o.sweep != null ? `<span class="mono warn bold">${formatPrice(o.sweep)}</span>` : '-';
+            const stopTpStr = (o.stop != null && o.tp1 != null)
+              ? `<span class="mono neg" style="font-size:12px;">SL: ${formatPrice(o.stop)}</span><br><span class="mono pos" style="font-size:12px;">TP1: ${formatPrice(o.tp1)}</span>`
+              : '-';
+
+            tr.innerHTML = `
+              <td class="bold mono" style="font-size:14px; color:#fff;">${o.symbol}</td>
+              <td><span class="pill ${sidePill}">${o.side}</span></td>
+              <td>${rangeStr}</td>
+              <td><span class="pill pill-cyan">${o.kind}</span><div class="dim" style="font-size:10px; margin-top:2px;">${o.route}</div></td>
+              <td>${sweepStr}</td>
+              <td class="mono bold" style="color:#fff;">$${formatPrice(o.entry_price)}</td>
+              <td class="mono bold" style="color:#fff;">$${formatPrice(o.exit_price)}</td>
+              <td>${stopTpStr}</td>
+              <td class="mono bold ${o.net >= 0 ? 'pos' : 'neg'}">${o.net >= 0 ? '+' : ''}$${o.net.toFixed(2)}</td>
+              <td class="mono bold ${o.net_r >= 0 ? 'pos' : 'neg'}">${o.net_r.toFixed(2)}R</td>
+              <td><span class="pill pill-amber">${o.status}</span></td>
+              <td class="mono dim">${o.duration_str}</td>
+              <td class="dim mono">${new Date(o.closed_ms).toLocaleTimeString()}</td>
+            `;
+            outBody.appendChild(tr);
+          });
+        }
       }
     }
 
@@ -1562,20 +1703,39 @@
       // Outcomes
       const outTbody = document.getElementById('outcomesTableBody');
       outTbody.replaceChildren();
-      const outcomes = state.outcomes || [];
+      const rawOutcomes = state.outcomes || [];
+      const outcomes = rawOutcomes.map(enrichOutcomeData);
       if (outcomes.length === 0) {
-        outTbody.innerHTML = '<tr><td colspan="8" class="dim" style="text-align:center; padding: 24px;">No closed outcomes in database.</td></tr>';
+        outTbody.innerHTML = '<tr><td colspan="16" class="dim" style="text-align:center; padding: 24px;">No closed outcomes in database.</td></tr>';
       } else {
-        outcomes.forEach(o => {
+        outcomes.slice().reverse().forEach(o => {
           const tr = document.createElement('tr');
+          const sidePill = o.side === 'LONG' ? 'pill-green' : 'pill-rose';
+          const rangeStr = (o.lower != null && o.upper != null) 
+            ? `<span class="mono bold" style="color:#fff;">[${formatPrice(o.lower)}, ${formatPrice(o.upper)}]</span><div class="dim" style="font-size:10px;">Sup: ${formatPrice(o.lower)} · Res: ${formatPrice(o.upper)}</div>`
+            : '-';
+          const sweepStr = o.sweep != null ? `<span class="mono warn bold">${formatPrice(o.sweep)}</span>` : '-';
+          const stopTpStr = (o.stop != null && o.tp1 != null)
+            ? `<span class="mono neg" style="font-size:12px;">SL: ${formatPrice(o.stop)}</span><br><span class="mono pos" style="font-size:12px;">TP1: ${formatPrice(o.tp1)}</span>`
+            : '-';
+          const qtyStr = o.qty != null ? Number(o.qty).toLocaleString() : '-';
+
           tr.innerHTML = `
-            <td class="dim mono">${o.position_id.slice(0, 10)}...</td>
-            <td><span class="pill pill-gray">${o.status}</span></td>
+            <td class="bold mono" style="font-size:14px; color:#fff;">${o.symbol}</td>
+            <td><span class="pill ${sidePill}">${o.side}</span></td>
+            <td>${rangeStr}</td>
+            <td><span class="pill pill-cyan">${o.kind}</span><div class="dim" style="font-size:10px; margin-top:2px;">${o.route}</div></td>
+            <td>${sweepStr}</td>
+            <td class="mono bold" style="color:#fff;">$${formatPrice(o.entry_price)}</td>
+            <td class="mono bold" style="color:#fff;">$${formatPrice(o.exit_price)}</td>
+            <td>${stopTpStr}</td>
+            <td class="mono">${qtyStr}</td>
+            <td class="mono">$${(o.initial_risk || 0).toFixed(2)}</td>
+            <td class="mono">$${(o.fees || 0).toFixed(2)}</td>
             <td class="mono bold ${o.net >= 0 ? 'pos' : 'neg'}">${o.net >= 0 ? '+' : ''}$${o.net.toFixed(2)}</td>
             <td class="mono bold ${o.net_r >= 0 ? 'pos' : 'neg'}">${o.net_r.toFixed(2)}R</td>
-            <td class="mono">$${o.initial_risk.toFixed(2)}</td>
-            <td class="mono">$${o.fees.toFixed(2)}</td>
-            <td class="mono">$${o.funding.toFixed(2)}</td>
+            <td><span class="pill pill-amber">${o.status}</span></td>
+            <td class="mono dim">${o.duration_str}</td>
             <td class="dim mono">${new Date(o.closed_ms).toLocaleTimeString()}</td>
           `;
           outTbody.appendChild(tr);
